@@ -1,10 +1,7 @@
-use std::any;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
-use anyhow::Error;
 use serde::Deserialize;
-use serde_json::{Number, Value};
 
 #[derive(Debug, Deserialize)]
 struct FFProbeInfo {
@@ -68,7 +65,7 @@ pub fn list_subtitle_tracks(file_path: PathBuf) -> anyhow::Result<Vec<String>> {
 
     let data: FFProbeInfo = serde_json::from_slice(&output.stdout)?;
 
-    let mut subtitle_tracks = Vec::new();
+    let mut subtitle_tracks = vec![String::new()];
     for t in data.streams {
         if t.codec_type != "subtitle" {
             continue;
