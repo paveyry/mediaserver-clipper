@@ -25,14 +25,6 @@ struct StreamTags {
     title: Option<String>,
 }
 
-fn type_err_msg(typ: &str) -> anyhow::Error {
-    Error::msg("ffprobe json should be of type {typ}")
-}
-
-fn key_err_msg(key: &str) -> anyhow::Error {
-    Error::msg(format!("{key} information is missing from ffprobe output"))
-}
-
 pub fn list_audio_tracks(file_path: PathBuf) -> anyhow::Result<Vec<String>> {
     // TODO: return a dict and avoid string split to extract value
 
