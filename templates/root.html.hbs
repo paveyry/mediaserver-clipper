@@ -25,6 +25,17 @@
         </fieldset>
     </form>
 
+    {{#if pending_jobs}}
+    <article id="pending_jobs">
+        <h5>Clips in queue</h5>
+        <ul>
+            {{#each pending_jobs}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+    </article>
+    {{/if}}
+
     <br/>
     <div id="Clips">
         {{#each clips}}
@@ -32,9 +43,10 @@
                 <div>
                     <div class="grid">
                         <div>
-                            <button class="outline primary"><i class="fa-solid fa-download"></i></button>
-                            <button class="outline primary"><i class="fa-solid fa-link"></i></button>
-                            <button class="outline primary"><i class="fa-solid fa-trash"></i></button>
+                            <a href="{{this.0.url}}" download><button class="outline primary"><i class="fa-solid fa-download"></i></button></a>
+                            <a href="{{this.0.url}}"><button class="outline primary"><i class="fa-solid fa-link"></i></button></a>
+                            <a href="{{this.0.public_url}}"><button class="outline primary"><i class="fa-solid fa-share-nodes"></i></button></a>
+                            <a href="/delete?clip_name={{this.0.clip_name}}"><button class="outline primary"><i class="fa-solid fa-trash"></i></button></a>
                         </div>
                         <h2 class="video-title">{{this.0.clip_name}}</h2>
                     </div>
@@ -47,9 +59,10 @@
                 <div>
                     <div class="grid">
                         <div>
-                            <button class="outline primary"><i class="fa-solid fa-download"></i></button>
-                            <button class="outline primary"><i class="fa-solid fa-link"></i></button>
-                            <button class="outline primary"><i class="fa-solid fa-trash"></i></button>
+                            <a href="{{this.1.url}}" download><button class="outline primary"><i class="fa-solid fa-download"></i></button></a>
+                            <a href="{{this.1.url}}"><button class="outline primary"><i class="fa-solid fa-link"></i></button></a>
+                            <a href="{{this.1.public_url}}"><button class="outline primary"><i class="fa-solid fa-share-nodes"></i></button></a>
+                            <a href="/delete?clip_name={{this.1.clip_name}}"><button class="outline primary"><i class="fa-solid fa-trash"></i></button></a>
                         </div>
                         <h2 class="video-title">{{this.1.clip_name}}</h2>
                     </div>

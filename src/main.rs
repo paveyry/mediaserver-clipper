@@ -65,10 +65,11 @@ fn app() -> _ {
 
 #[get("/")]
 async fn root(app: &State<App>) -> Template {
-    match files::video_pairs_in_directory(&app.config.out_path, &app.config.public_link_prefix) {
+    let pending = app.clipper.jobs_in_progress();
+    match files::video_pairs_in_directory(&app.config.out_path, &app.config.public_link_prefix, &pending) {
         Ok(clips) => Template::render(
             "root",
-            context! { app_name: &app.config.app_name, clips: clips},
+            context! { app_name: &app.config.app_name, clips: clips, pending_jobs: pending},
         ),
         Err(e) => render_error(vec![format!(
             "Failed to list clips from output directory: {}",
@@ -136,10 +137,10 @@ async fn create_clip(
     }
 }
 
-#[get("/delete?<name>")]
-async fn delete_clip(app: &State<App>, name: String) -> Template {
-    match files::delete_file(&app.config.out_path, &name) {
-        Ok(_) => render_message(format!("Clip {} was successfully removed", name)),
+#[get("/delete?<clip_name>")]
+async fn delete_clip(clip_name: String, app: &State<App>) -> Template {
+    match files::delete_file(&app.config.out_path, &clip_name) {
+        Ok(_) => render_message(format!("Clip {} was successfully removed", clip_name)),
         Err(e) => render_error(vec![format!("failed to remove file: {e}")]),
     }
 }

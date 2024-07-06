@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::collections::HashSet;
 
 use crate::config::OUTPUT_ROUTE;
 
@@ -27,8 +28,9 @@ impl VideoInfo {
 pub fn video_pairs_in_directory(
     p: &PathBuf,
     public_url_prefix: &str,
+    pending: &HashSet<String>,
 ) -> anyhow::Result<Vec<(VideoInfo, VideoInfo)>> {
-    Ok(files_in_directory_with_ext(p, ".mp4")?
+    Ok(files_in_directory_with_ext(p, ".mp4", pending)?
         .chunks(2)
         .map(|x| {
             if x.len() >= 2 {
@@ -46,13 +48,14 @@ pub fn video_pairs_in_directory(
         .collect())
 }
 
-fn files_in_directory_with_ext(p: &PathBuf, ext: &str) -> anyhow::Result<Vec<String>> {
+fn files_in_directory_with_ext(p: &PathBuf, ext: &str, pending: &HashSet<String>) -> anyhow::Result<Vec<String>> {
     Ok(fs::read_dir(p)?
         .into_iter()
         .filter_map(Result::ok)
         .filter_map(|de| de.file_name().to_str().map(|s| s.to_owned()))
         .filter(|e| e.ends_with(ext))
         .map(|s| s[..s.len() - 4].to_owned())
+        .filter(|s| !pending.contains(s))
         .collect())
 }
 
