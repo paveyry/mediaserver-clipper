@@ -9,7 +9,7 @@ use crate::config::AppConfig;
 use crate::ffprobe::get_track_data;
 
 use rocket::form::{Contextual, Form};
-use rocket::fs::{relative, FileServer, Options};
+use rocket::fs::{FileServer, Options};
 use rocket::request::FlashMessage;
 use rocket::response::{Flash, Redirect};
 use rocket::State;
@@ -41,13 +41,13 @@ fn app() -> _ {
         .manage(App::new())
         .mount(
             config::OUTPUT_ROUTE,
-            FileServer::new(output_dir, Options::Missing | Options::NormalizeDirs),
+            FileServer::new(output_dir, Options::NormalizeDirs),
         )
         .mount(
             "/public",
             FileServer::new(
-                relative!("/public"),
-                Options::Missing | Options::NormalizeDirs,
+                "./public",
+                Options::NormalizeDirs,
             ),
         )
         .mount(
@@ -86,7 +86,7 @@ async fn select_source(
     form: Form<Contextual<'_, models::NewClipRequest>>,
 ) -> Result<Flash<Redirect>, Template> {
     if let Some(ref ncr) = form.value {
-        let message = Flash::success(Redirect::to(uri!(configure_clip)), ncr.file_path.clone());
+        let message = Flash::success(Redirect::to(uri!(configure_clip)), ncr.file_path.trim().to_string());
         return Ok(message);
     }
     Err(render_error(vec![
@@ -100,7 +100,7 @@ async fn configure_clip(app: &State<App>, flash: Option<FlashMessage<'_>>) -> Te
     if source_file.is_empty() {
         return render_error(vec!["Path to source file should not be empty".to_string()]);
     }
-    match get_track_data(&source_file) {
+    match get_track_data(source_file.trim()) {
         Ok((at, st)) => Template::render(
             "configure",
             context! {app_name: &app.config.app_name, source_file, audio_tracks: at, subtitle_tracks: st},
@@ -170,7 +170,7 @@ fn setup_job(app: &State<App>, ccr: &models::ConfigureClipRequest) -> anyhow::Re
     );
 
     app.clipper.add_job(Job::new(
-        ccr.source_file.to_string(),
+        ccr.source_file.trim().to_string(),
         out_file_path,
         ccr.clip_name.to_string(),
         ccr.audio_track.to_string(),
