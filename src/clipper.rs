@@ -28,7 +28,7 @@ impl VideoTime {
     }
 
     fn from_strings(hours: &str, minutes: &str, seconds: &str) -> anyhow::Result<Self> {
-        Ok(Self(
+        Ok(Self::new(
             str_to_u8(hours)?,
             str_to_u8(minutes)?,
             str_to_u8(seconds)?,

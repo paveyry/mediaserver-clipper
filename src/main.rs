@@ -80,7 +80,6 @@ async fn root(app: &State<App>) -> Template {
 
 #[post("/", data = "<form>")]
 async fn select_source(
-    app: &State<App>,
     form: Form<Contextual<'_, models::NewClipRequest>>,
 ) -> Result<Flash<Redirect>, Template> {
     if let Some(ref ncr) = form.value {
