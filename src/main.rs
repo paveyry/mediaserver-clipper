@@ -1,10 +1,14 @@
-use std::env;
-use std::fs;
-use std::path::PathBuf;
-use std::str::FromStr;
+mod clipper;
+mod config;
+mod ffprobe;
+mod files;
+mod models;
 
+use clipper::validate_start_end;
 use clipper::Job;
+use config::AppConfig;
 use ffprobe::get_track_data;
+
 use rocket::form::{Contextual, Form};
 use rocket::fs::{relative, FileServer, Options};
 use rocket::request::FlashMessage;
@@ -13,43 +17,6 @@ use rocket::State;
 use rocket::{get, launch, post, routes, uri};
 use rocket_dyn_templates::{context, Template};
 
-mod clipper;
-mod ffprobe;
-mod files;
-mod models;
-
-const APP_NAME_VARNAME: &str = "APP_NAME";
-const OUTPUT_PATH_VARNAME: &str = "OUTPUT_PATH";
-const OUTPUT_LINK_PREFIX_VARNAME: &str = "OUTPUT_LINK_PREFIX";
-
-const DEFAULT_OUTPUT_PATH: &str = "output";
-const DEFAULT_VAR_NAME: &str = "Media Server Clipper";
-
-struct AppConfig {
-    app_name: String,
-    out_path: PathBuf,
-    out_link_prefix: String,
-}
-
-impl AppConfig {
-    fn read_from_env() -> Self {
-        let out_path =
-            env::var(OUTPUT_PATH_VARNAME).unwrap_or_else(|_| DEFAULT_OUTPUT_PATH.to_string());
-        let out_link_prefix =
-            env::var(OUTPUT_LINK_PREFIX_VARNAME).unwrap_or_else(|_| format!("/{out_path}"));
-        let out_path_buf = PathBuf::from_str(&out_path)
-            .expect(format!("{OUTPUT_PATH_VARNAME} should be a valid path").as_str());
-        if !fs::metadata(&out_path_buf).is_ok() {
-            fs::create_dir_all(&out_path_buf).expect("failed to create missing output directory");
-        }
-        Self {
-            app_name: env::var(APP_NAME_VARNAME).unwrap_or_else(|_| DEFAULT_VAR_NAME.to_string()),
-            out_path: out_path_buf,
-            out_link_prefix,
-        }
-    }
-}
-
 struct App {
     config: AppConfig,
     clipper: clipper::Worker,
@@ -57,18 +24,26 @@ struct App {
 
 impl App {
     fn new() -> Self {
+        let config = AppConfig::read_from_env();
+        let max_queue_size = config.max_queue_size;
         Self {
-            config: AppConfig::read_from_env(),
-            clipper: clipper::Worker::new(),
+            config,
+            clipper: clipper::Worker::new(max_queue_size),
         }
     }
 }
 
 #[launch]
 fn app() -> _ {
+    let app = App::new();
+    let output_dir = app.config.out_path.clone();
     rocket::build()
         .attach(Template::fairing())
         .manage(App::new())
+        .mount(
+            config::OUTPUT_ROUTE,
+            FileServer::new(output_dir, Options::Missing | Options::NormalizeDirs),
+        )
         .mount(
             "/public",
             FileServer::new(
@@ -78,13 +53,19 @@ fn app() -> _ {
         )
         .mount(
             "/",
-            routes![root, configure_clip, create_clip, select_source],
+            routes![
+                root,
+                configure_clip,
+                delete_clip,
+                create_clip,
+                select_source
+            ],
         )
 }
 
 #[get("/")]
 async fn root(app: &State<App>) -> Template {
-    match files::video_pairs_in_directory(&app.config.out_path) {
+    match files::video_pairs_in_directory(&app.config.out_path, &app.config.public_link_prefix) {
         Ok(clips) => Template::render(
             "root",
             context! { app_name: &app.config.app_name, clips: clips},
@@ -129,36 +110,78 @@ async fn configure_clip(app: &State<App>, flash: Option<FlashMessage<'_>>) -> Te
 async fn create_clip(
     app: &State<App>,
     form: Form<Contextual<'_, models::ConfigureClipRequest>>,
-) -> Result<Flash<Redirect>, Template> {
+) -> Template {
     if let Some(ref ccr) = form.value {
-        app.clipper.add_job(Job::new(
-            ccr.source_file.to_string(),
-            format!("{}/{}", app.config.out_path, ccr.clip_name),
-            ccr.clip_name.to_string(),
-            audio_track,
-            subtitle_track,
-            start_time,
-            end_time,
-        ));
-
-        let message = Flash::success(Redirect::to(uri!(configure_clip)), ccr.source_file.clone());
-        return Ok(message);
+        match setup_job(app, ccr) {
+            Ok(_) => render_message(format!(
+                "clip {} was successfully added to processing queue",
+                ccr.clip_name
+            )),
+            Err(e) => render_error(vec![e.to_string()]),
+        }
+    } else {
+        render_error(
+            form.context
+                .errors()
+                .map(|error| {
+                    let name = error
+                        .name
+                        .as_ref()
+                        .map_or_else(|| "".to_string(), |e| e.to_string());
+                    let description = error;
+                    format!("'{}' {}", name, description)
+                })
+                .collect::<Vec<_>>(),
+        )
     }
-    Err(render_error(
-        form.context
-            .errors()
-            .map(|error| {
-                let name = error
-                    .name
-                    .as_ref()
-                    .map_or_else(|| "".to_string(), |e| e.to_string());
-                let description = error;
-                format!("'{}' {}", name, description)
-            })
-            .collect::<Vec<_>>(),
-    ))
+}
+
+#[get("/delete?<name>")]
+async fn delete_clip(app: &State<App>, name: String) -> Template {
+    match files::delete_file(&app.config.out_path, &name) {
+        Ok(_) => render_message(format!("Clip {} was successfully removed", name)),
+        Err(e) => render_error(vec![format!("failed to remove file: {e}")]),
+    }
+}
+
+fn setup_job(app: &State<App>, ccr: &models::ConfigureClipRequest) -> anyhow::Result<()> {
+    let (start_time, end_time) = validate_start_end(
+        app.config.max_clip_duration,
+        &ccr.start_hour,
+        &ccr.start_min,
+        &ccr.start_sec,
+        &ccr.end_hour,
+        &ccr.end_min,
+        &ccr.end_sec,
+    )?;
+
+    let out_file_path = format!(
+        "{}/{}.mp4",
+        app.config
+            .out_path
+            .to_str()
+            .ok_or_else(|| anyhow::Error::msg(
+                "internal error: output path could not be read as string"
+            ))?,
+        ccr.clip_name
+    );
+
+    app.clipper.add_job(Job::new(
+        ccr.source_file.to_string(),
+        out_file_path,
+        ccr.clip_name.to_string(),
+        ccr.audio_track.to_string(),
+        ccr.subtitle_track.to_string(),
+        start_time,
+        end_time,
+    ))?;
+    Ok(())
 }
 
 fn render_error(errors: Vec<String>) -> Template {
-    Template::render("error", context! {errors})
+    Template::render("message", context! {errors})
+}
+
+fn render_message(message: String) -> Template {
+    Template::render("message", context! {message})
 }

@@ -35,9 +35,34 @@ impl VideoTime {
         ))
     }
 
-    fn seconds(&self) -> u32 {
-        self.0 as u32 * 3600 + self.1 as u32 * 60 + self.2 as u32
+    fn seconds(&self) -> u64 {
+        self.0 as u64 * 3600 + self.1 as u64 * 60 + self.2 as u64
     }
+}
+
+pub fn validate_start_end(
+    max_seconds: u64,
+    start_hour: &str,
+    start_min: &str,
+    start_sec: &str,
+    end_hour: &str,
+    end_min: &str,
+    end_sec: &str,
+) -> anyhow::Result<(VideoTime, VideoTime)> {
+    let start_time = VideoTime::from_strings(start_hour, start_min, start_sec)?;
+    let end_time = VideoTime::from_strings(end_hour, end_min, end_sec)?;
+
+    let duration = end_time.seconds() as i64 - start_time.seconds() as i64;
+    if duration <= 0 {
+        return Err(anyhow::Error::msg("start time should be before end time"));
+    }
+    if duration as u64 > max_seconds {
+        return Err(anyhow::Error::msg(format!(
+            "clip duration should not exceed {} seconds",
+            max_seconds
+        )));
+    }
+    Ok((start_time, end_time))
 }
 
 fn str_to_u8(s: &str) -> anyhow::Result<u8> {
@@ -65,7 +90,7 @@ pub struct Job {
 }
 
 impl Job {
-    fn new(
+    pub fn new(
         source_file_path: String,
         out_file_path: String,
         clip_name: String,
@@ -89,14 +114,16 @@ impl Job {
 pub struct Worker {
     pending_jobs: Arc<Mutex<HashSet<String>>>,
     tx: mpsc::Sender<Job>,
+    max_queue_size: usize,
 }
 
 impl Worker {
-    pub fn new() -> Self {
+    pub fn new(max_queue_size: usize) -> Self {
         let (tx, rx) = mpsc::channel();
         let new_worker = Self {
             pending_jobs: Arc::new(Mutex::new(HashSet::new())),
             tx,
+            max_queue_size,
         };
         let pending_jobs_arc = Arc::clone(&new_worker.pending_jobs);
         thread::spawn(move || {
@@ -118,16 +145,31 @@ impl Worker {
         // avoid duplicate job ids
         let mut job_id = job.clip_name.clone();
         let mut copy_idx = 0;
-        while self.pending_jobs.lock().unwrap().contains(&job_id) {
+        while self
+            .pending_jobs
+            .lock()
+            .expect("fatal error; lock holder has panicked")
+            .contains(&job_id)
+        {
             copy_idx += 1;
             job_id = format!("{}_copy{}", job.clip_name, copy_idx);
         }
         job.clip_name = job_id;
 
-        self.pending_jobs
-            .lock()
-            .unwrap()
-            .insert(job.clip_name.clone());
+        {
+            let mut pj = self
+                .pending_jobs
+                .lock()
+                .expect("fatal error; lock holder has panicked");
+
+            if pj.len() >= self.max_queue_size {
+                return Err(anyhow::Error::msg(format!(
+                    "maximum job queue size has been reached: {}",
+                    self.max_queue_size
+                )));
+            }
+            pj.insert(job.clip_name.clone());
+        }
         self.tx.send(job)?;
         Ok(())
     }
@@ -203,6 +245,9 @@ fn run_job(job: Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> anyhow::Resul
 
     cmd.output()?;
 
-    pending_jobs.lock().unwrap().remove(&job.clip_name);
+    pending_jobs
+        .lock()
+        .expect("fatal error; lock holder has panicked")
+        .remove(&job.clip_name);
     Ok(())
 }

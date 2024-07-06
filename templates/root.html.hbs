@@ -32,26 +32,30 @@
                 <div>
                     <div class="grid">
                         <div>
-                            <button class="outline primary"><i class="fa-solid fa-link"></i></button>
                             <button class="outline primary"><i class="fa-solid fa-download"></i></button>
+                            <button class="outline primary"><i class="fa-solid fa-link"></i></button>
                             <button class="outline primary"><i class="fa-solid fa-trash"></i></button>
                         </div>
-                        <h2 class="video-title">{{this.0}}</h2>
+                        <h2 class="video-title">{{this.0.clip_name}}</h2>
                     </div>
-                    <img src="https://placehold.co/1600x700"/>
+                    <video width="100%" controls>
+                        <source src="{{this.0.url}}" type="video/mp4"/>
+                    </video>
                 </div>
 
-                {{#if this.1 }}
+                {{#if this.1.clip_name }}
                 <div>
                     <div class="grid">
                         <div>
-                            <button class="outline primary"><i class="fa-solid fa-link"></i></button>
                             <button class="outline primary"><i class="fa-solid fa-download"></i></button>
+                            <button class="outline primary"><i class="fa-solid fa-link"></i></button>
                             <button class="outline primary"><i class="fa-solid fa-trash"></i></button>
                         </div>
-                        <h2 class="video-title">{{this.1}}</h2>
+                        <h2 class="video-title">{{this.1.clip_name}}</h2>
                     </div>
-                    <img src="https://placehold.co/1600x700"/>
+                    <video width="100%" controls>
+                        <source src="{{this.1.url}}" type="video/mp4"/>
+                    </video>
                 </div>
                 {{else}}
                 <div></div>

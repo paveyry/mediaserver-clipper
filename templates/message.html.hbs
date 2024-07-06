@@ -14,9 +14,16 @@
             <header>
                 <a href="/" aria-label="Close" rel="prev"></a>
                 <p>
-                    <strong>🥺 Oops!</strong>
+                    {{#if errors}}
+                        <strong>🥺 Oops!</strong>
+                    {{else}}
+                        <strong>😁 Yay!</strong>
+                    {{/if}}
                 </p>
             </header>
+            {{#if message}}
+                <p>{{message}}</p>
+            {{/if}}
             <ul>
                 {{#each errors}}
                     <li>{{this}}</li>
