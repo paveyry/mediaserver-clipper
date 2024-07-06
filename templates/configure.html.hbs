@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark"/>
+    <link rel="stylesheet" href="/public/css/pico.min.css">
+    <title>{{ app_name }}</title>
+</head>
+<body>
+<main class="container">
+    <h1>{{ app_name }} - Clip settings</h1>
+
+    <p>Source file: <kbd>{{ source_file }}</kbd></p>
+
+    <form method="POST" enctype="multipart/form-data" action="/configure_clip">
+        <input type="hidden" name="source_file" value="{{source_file}}"/>
+        <label>Clip name</label>
+        <input type="text" name="clip_name"/>
+        <div class="grid">
+            <div>
+                <label>Start time</label>
+                <fieldset role="group">
+                    <input type="text"
+                        name="start_hour"
+                        placeholder="h"
+                    />
+                    <input type="text"
+                        name="start_min"
+                        placeholder="m"
+                    />
+                    <input type="text"
+                        name="start_sec"
+                        placeholder="s"
+                    />
+                </fieldset>
+            {{!-- </div>
+            <div> --}}
+                <label>End time</label>
+                <fieldset role="group">
+                    <input type="text"
+                        name="end_hour"
+                        placeholder="h"
+                    />
+                    <input type="text"
+                        name="end_min"
+                        placeholder="m"
+                    />
+                    <input type="text"
+                        name="end_sec"
+                        placeholder="s"
+                    />
+                </fieldset>
+            </div>
+            <div>
+                <label>Audio track</label>
+                <select name="audio_track">
+                    {{#each audio_tracks}}
+                        <option value="{{this}}">{{this}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <div>
+                <label>Subtitle track</label>
+                <select name="subtitle_track">
+                    {{#each subtitle_tracks}}
+                        <option value="{{this}}">{{this}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <div></div>
+            <div></div>
+        </div>
+            <button type="submit">Make a clip!</button>
+    </form>
+
+</main>
+</body>
+</html>

@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use std::process::Command;
+use std::str::FromStr;
 
 use serde::Deserialize;
 
@@ -22,7 +23,12 @@ struct StreamTags {
     title: Option<String>,
 }
 
-pub fn list_audio_tracks(file_path: PathBuf) -> anyhow::Result<Vec<String>> {
+pub fn get_track_data(file_path: &str) -> anyhow::Result<(Vec<String>, Vec<String>)> {
+    let pb = PathBuf::from_str(file_path)?;
+    Ok((list_audio_tracks(&pb)?, list_subtitle_tracks(&pb)?))
+}
+
+pub fn list_audio_tracks(file_path: &PathBuf) -> anyhow::Result<Vec<String>> {
     // TODO: return a dict and avoid string split to extract value
 
     let output = Command::new("ffprobe")
@@ -52,7 +58,7 @@ pub fn list_audio_tracks(file_path: PathBuf) -> anyhow::Result<Vec<String>> {
     Ok(audio_tracks)
 }
 
-pub fn list_subtitle_tracks(file_path: PathBuf) -> anyhow::Result<Vec<String>> {
+pub fn list_subtitle_tracks(file_path: &PathBuf) -> anyhow::Result<Vec<String>> {
     // TODO: return a dict and avoid string split to extract value
 
     let output = Command::new("ffprobe")
@@ -66,17 +72,16 @@ pub fn list_subtitle_tracks(file_path: PathBuf) -> anyhow::Result<Vec<String>> {
     let data: FFProbeInfo = serde_json::from_slice(&output.stdout)?;
 
     let mut subtitle_tracks = vec![String::new()];
-    for t in data.streams {
+    for (i, t) in data.streams.into_iter().enumerate() {
         if t.codec_type != "subtitle" {
             continue;
         }
-        let index = t.index;
         let tags = t.tags.unwrap_or_default();
         let lang = tags.language.unwrap_or_default();
         let title = tags.title.unwrap_or_default();
         let codec = t.codec_name;
 
-        subtitle_tracks.push(format!("{index}:'{title}' ({lang} - {codec})"));
+        subtitle_tracks.push(format!("{i}:'{title}' ({lang} - {codec})"));
     }
 
     Ok(subtitle_tracks)

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark"/>
+    <link rel="stylesheet" href="/public/css/pico.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
+    <title>Hello world!</title>
+</head>
+<body>
+<main class="container">
+    <h1>{{ app_name }}</h1>
+
+    <form method="POST" enctype="multipart/form-data" action="/">
+        <fieldset role="group">
+            <input type="text"
+                name="file_path"
+                placeholder="Path to source file"
+                aria-label="File path"
+                value="{{ first_name }}"
+                aria-invalid="{{ first_name_error}}"
+            />
+            <button type="submit">Clip</button>
+        </fieldset>
+    </form>
+
+    <br/>
+    <div id="Clips">
+        {{#each clips}}
+            <div class="grid">
+                <div>
+                    <div class="grid">
+                        <div>
+                            <button class="outline primary"><i class="fa-solid fa-link"></i></button>
+                            <button class="outline primary"><i class="fa-solid fa-download"></i></button>
+                            <button class="outline primary"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <h2 class="video-title">{{this.0}}</h2>
+                    </div>
+                    <img src="https://placehold.co/1600x700"/>
+                </div>
+
+                {{#if this.1 }}
+                <div>
+                    <div class="grid">
+                        <div>
+                            <button class="outline primary"><i class="fa-solid fa-link"></i></button>
+                            <button class="outline primary"><i class="fa-solid fa-download"></i></button>
+                            <button class="outline primary"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <h2 class="video-title">{{this.1}}</h2>
+                    </div>
+                    <img src="https://placehold.co/1600x700"/>
+                </div>
+                {{else}}
+                <div></div>
+                {{/if}}
+            </div>
+            <br/>
+        {{/each}}
+    </div>
+</main>
+</body>
+</html>
