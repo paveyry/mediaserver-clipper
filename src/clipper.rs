@@ -6,8 +6,6 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
 
-use anyhow;
-
 #[derive(Debug, Clone)]
 pub struct VideoTime(u8, u8, u8);
 
@@ -58,15 +56,14 @@ pub fn validate_start_end(
     }
     if duration as u64 > max_seconds {
         return Err(anyhow::Error::msg(format!(
-            "clip duration should not exceed {} seconds",
-            max_seconds
+            "clip duration should not exceed {max_seconds} seconds"
         )));
     }
     Ok((start_time, end_time))
 }
 
 fn str_to_u8(s: &str) -> anyhow::Result<u8> {
-    if s == "" {
+    if s.is_empty() {
         return Ok(0);
     }
     Ok(s.parse()?)
@@ -179,32 +176,12 @@ fn work(rx: mpsc::Receiver<Job>, pending_jobs: Arc<Mutex<HashSet<String>>>) {
     println!("worker has started...");
     while let Ok(job) = rx.recv() {
         if let Err(e) = run_job(job, Arc::clone(&pending_jobs)) {
-            println!("{}", e);
+            println!("{e}");
         }
     }
 }
 
 fn run_job(job: Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> anyhow::Result<()> {
-    // let mut args = vec![
-    //     "-i".to_string(),
-    //     job.file_path.clone(),
-    //     "-ss".to_string(),
-    //     job.start_time.to_string(),
-    //     "-to".to_string(),
-    //     job.end_time.to_string(),
-    //     "-c:v".to_string(),
-    //     "libx264".to_string(),
-    //     "-c:a".to_string(),
-    //     "acc".to_string(),
-    //     "-f".to_string(),
-    //     "mp4".to_string(),
-    //     "-metadata:g:0".to_string(),
-    //     format!("title={}", job.clip_name),
-    // ];
-    // if !job.subtitle_track.is_empty() {
-
-    // }
-
     let mut cmd = Command::new("ffmpeg");
 
     cmd.args(["-i", &job.source_file_path])
@@ -223,14 +200,14 @@ fn run_job(job: Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> anyhow::Resul
         .args(["-crf", "22"])
         .args(["-pix_fmt", "yuv420p"]);
 
-    if let Some((a_idx, _)) = job.audio_track.split_once(":") {
+    if let Some((a_idx, _)) = job.audio_track.split_once(':') {
         cmd.args(["-map".to_string(), format!("0:{}", a_idx)]);
     } else {
         Err(anyhow::Error::msg("audio_track is missing or invalid"))?;
     }
 
     if !job.subtitle_track.is_empty() {
-        if let Some((st_idx, _)) = job.subtitle_track.split_once(":") {
+        if let Some((st_idx, _)) = job.subtitle_track.split_once(':') {
             cmd.args([
                 "-vf".to_string(),
                 format!(

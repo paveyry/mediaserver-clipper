@@ -1,11 +1,11 @@
-use std::fs;
-use std::path::PathBuf;
-use std::str::FromStr;
+use std::borrow::ToOwned;
 use std::collections::HashSet;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 use crate::config::OUTPUT_ROUTE;
 
-use anyhow;
 use serde::Serialize;
 
 #[derive(Default, Debug, Serialize)]
@@ -48,18 +48,21 @@ pub fn video_pairs_in_directory(
         .collect())
 }
 
-fn files_in_directory_with_ext(p: &PathBuf, ext: &str, pending: &HashSet<String>) -> anyhow::Result<Vec<String>> {
+fn files_in_directory_with_ext(
+    p: &PathBuf,
+    ext: &str,
+    pending: &HashSet<String>,
+) -> anyhow::Result<Vec<String>> {
     Ok(fs::read_dir(p)?
-        .into_iter()
         .filter_map(Result::ok)
-        .filter_map(|de| de.file_name().to_str().map(|s| s.to_owned()))
+        .filter_map(|de| de.file_name().to_str().map(ToOwned::to_owned))
         .filter(|e| e.ends_with(ext))
         .map(|s| s[..s.len() - 4].to_owned())
         .filter(|s| !pending.contains(s))
         .collect())
 }
 
-pub fn delete_file(dir: &PathBuf, clip_name: &str) -> anyhow::Result<()> {
+pub fn delete_file(dir: &Path, clip_name: &str) -> anyhow::Result<()> {
     let f = dir.join(PathBuf::from_str(format!("{clip_name}.mp4").as_str())?);
     Ok(fs::remove_file(f)?)
 }

@@ -33,29 +33,28 @@ impl AppConfig {
             env::var(PUBLIC_LINK_PREFIX_VARNAME).unwrap_or_else(|_| format!("/{out_path}"));
 
         let out_path_buf = PathBuf::from_str(&out_path)
-            .expect(format!("{OUTPUT_PATH_VARNAME} should be a valid path").as_str());
+            .unwrap_or_else(|_| panic!("{OUTPUT_PATH_VARNAME} should be a valid path"));
 
         let max_clip_duration = env::var(MAX_CLIP_DURATION_VARNAME)
             .map(|d| {
-                d.parse().expect(
-                    format!("{MAX_CLIP_DURATION_VARNAME} should be a valid number of seconds")
-                        .as_str(),
-                )
+                d.parse().unwrap_or_else(|_| {
+                    panic!("{MAX_CLIP_DURATION_VARNAME} should be a valid number of seconds")
+                })
             })
             .unwrap_or(DEFAULT_MAX_CLIP_DURATION);
 
         let max_queue_size = env::var(MAX_QUEUE_SIZE_VARNAME)
             .map(|d| {
-                d.parse().expect(
-                    format!("{MAX_QUEUE_SIZE_VARNAME} should be a valid positive number").as_str(),
-                )
+                d.parse().unwrap_or_else(|_| {
+                    panic!("{MAX_QUEUE_SIZE_VARNAME} should be a valid positive number")
+                })
             })
             .unwrap_or(DEFAULT_MAX_QUEUE_SIZE);
         if max_queue_size == 0 {
             panic!("{MAX_QUEUE_SIZE_VARNAME} should not be 0");
         }
 
-        if !fs::metadata(&out_path_buf).is_ok() {
+        if fs::metadata(&out_path_buf).is_err() {
             fs::create_dir_all(&out_path_buf).expect("failed to create missing output directory");
         }
 

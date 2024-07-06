@@ -4,10 +4,9 @@ mod ffprobe;
 mod files;
 mod models;
 
-use clipper::validate_start_end;
-use clipper::Job;
-use config::AppConfig;
-use ffprobe::get_track_data;
+use crate::clipper::{validate_start_end, Job};
+use crate::config::AppConfig;
+use crate::ffprobe::get_track_data;
 
 use rocket::form::{Contextual, Form};
 use rocket::fs::{relative, FileServer, Options};
@@ -66,7 +65,11 @@ fn app() -> _ {
 #[get("/")]
 async fn root(app: &State<App>) -> Template {
     let pending = app.clipper.jobs_in_progress();
-    match files::video_pairs_in_directory(&app.config.out_path, &app.config.public_link_prefix, &pending) {
+    match files::video_pairs_in_directory(
+        &app.config.out_path,
+        &app.config.public_link_prefix,
+        &pending,
+    ) {
         Ok(clips) => Template::render(
             "root",
             context! { app_name: &app.config.app_name, clips: clips, pending_jobs: pending},
@@ -93,7 +96,7 @@ async fn select_source(
 
 #[get("/configure_clip")]
 async fn configure_clip(app: &State<App>, flash: Option<FlashMessage<'_>>) -> Template {
-    let source_file = flash.map_or_else(|| String::default(), |msg| msg.message().to_string());
+    let source_file = flash.map_or_else(String::default, |msg| msg.message().to_string());
     if source_file.is_empty() {
         return render_error(vec!["Path to source file should not be empty".to_string()]);
     }
@@ -113,7 +116,7 @@ async fn create_clip(
 ) -> Template {
     if let Some(ref ccr) = form.value {
         match setup_job(app, ccr) {
-            Ok(_) => render_message(format!(
+            Ok(()) => render_message(format!(
                 "clip {} was successfully added to processing queue",
                 ccr.clip_name
             )),
@@ -127,9 +130,9 @@ async fn create_clip(
                     let name = error
                         .name
                         .as_ref()
-                        .map_or_else(|| "".to_string(), |e| e.to_string());
+                        .map_or_else(String::new, ToString::to_string);
                     let description = error;
-                    format!("'{}' {}", name, description)
+                    format!("'{name}' {description}")
                 })
                 .collect::<Vec<_>>(),
         )
@@ -139,7 +142,7 @@ async fn create_clip(
 #[get("/delete?<clip_name>")]
 async fn delete_clip(clip_name: String, app: &State<App>) -> Template {
     match files::delete_file(&app.config.out_path, &clip_name) {
-        Ok(_) => render_message(format!("Clip {} was successfully removed", clip_name)),
+        Ok(()) => render_message(format!("Clip {clip_name} was successfully removed")),
         Err(e) => render_error(vec![format!("failed to remove file: {e}")]),
     }
 }
