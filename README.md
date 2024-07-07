@@ -1,5 +1,5 @@
-MediaServer Clipper
-===================
+MediaServer Clipper ![](https://github.com/paveyry/mediaserver-clipper/actions/workflows/build.yml/badge.svg)
+==============================================
 
 Description
 -----------
