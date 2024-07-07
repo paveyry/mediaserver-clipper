@@ -91,44 +91,44 @@ Docker-compose examples
 ### Standalone (`PUBLIC_LINK_PREFIX` is not set)
 
 ```yaml
-    plex:
-    #[...]
-    volumes:
-        - ./media:/media
+plex:
+#[...]
+volumes:
+    - ./media:/media
 
-    mediaserverclipper:
-        image: paveyry/mediaserver-clipper
-        ports:
-            - 9987:8000
-        volumes:
-            - ./media:/media # mount it the same way as in plex/jellyfin
-            - ./clips:/app/output
+mediaserverclipper:
+    image: paveyry/mediaserver-clipper
+    ports:
+        - 9987:8000
+    volumes:
+        - ./media:/media # mount it the same way as in plex/jellyfin
+        - ./clips:/app/output
 ```
 
 ### With an external server for sharing (`PUBLIC_LINK_PREFIX` is set)
 
 ```yaml
-    plex:
-    #[...]
+plex:
+#[...]
+volumes:
+    - ./media:/media
+
+mediaserverclipper: # This can be protected by a htpassword
+    image: paveyry/mediaserver-clipper
+    ports:
+        - 9987:8000
+    environment:
+        - PUBLIC_LINK_PREFIX=https://yourdomain.tld:9988 # Share links wil link to static_clips
     volumes:
         - ./media:/media
+        - ./clips:/app/output
 
-    mediaserverclipper: # This can be protected by a htpassword
-        image: paveyry/mediaserver-clipper
-        ports:
-            - 9987:8000
-        environment:
-            - PUBLIC_LINK_PREFIX=https://yourdomain.tld:9988 # Share links wil link to static_clips
-        volumes:
-            - ./media:/media
-            - ./clips:/app/output
-
-    static_clips: # This has read-only access so it can be safely exposed without auth
-        image: nginx
-        ports:
-            - 9988:80 # this is https://yourdomain.tld:9988 linked in PUBLIC_LINK_PREFIX
-        volumes:
-            - ./clips:/usr/share/nginx/html:ro
+static_clips: # This has read-only access so it can be safely exposed without auth
+    image: nginx
+    ports:
+        - 9988:80 # this is https://yourdomain.tld:9988 linked in PUBLIC_LINK_PREFIX
+    volumes:
+        - ./clips:/usr/share/nginx/html:ro
 ```
 
 Note that the `download` and `link` buttons will still link to the mediaserverclipper url, only
