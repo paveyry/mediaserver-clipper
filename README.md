@@ -15,10 +15,13 @@ it makes it compatible with absolutely any media server.
 How to use
 ----------
 
-On Plex, you can click the triple-dot button while watching a video and then `Get Info` in order to get the absolute path to the file.
-If your Plex instance is running on the same system as MediaServer Clipper or if you mounted the media volume the same way both in your Plex instance, then this path will also work for the Clipper app to access it.
+On Plex, you can click the triple-dot button while watching a video and then `Get Info` in order
+to get the absolute path to the file. If your Plex instance is running on the same system as
+MediaServer Clipper or if you mounted the media volume the same way both in your Plex instance,
+then this path will also work for the Clipper app to access it.
 
-MediaServer Clipper will automatically list audio and subtitle tracks and you can select which audio you want to use and whether or not you want to burn in subtitles in the clip.
+MediaServer Clipper will automatically list audio and subtitle tracks and you can select which
+audio you want to use and whether or not you want to burn in subtitles in the clip.
 
 ![Get File Info in Plex](https://private-user-images.githubusercontent.com/3884900/346305859-56947528-cc8e-44f8-9e8d-e74c01eb18c1.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjAzMTQ5NzgsIm5iZiI6MTcyMDMxNDY3OCwicGF0aCI6Ii8zODg0OTAwLzM0NjMwNTg1OS01Njk0NzUyOC1jYzhlLTQ0ZjgtOWU4ZC1lNzRjMDFlYjE4YzEucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI0MDcwNyUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNDA3MDdUMDExMTE4WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9YmJmODFhMDJhMTg1ZGJhMmViNDgxZGJiMTM5ZTk3MDA0ZTRjNTZjOGNkN2MzMzdjNDU5ZTExMzJkMTFmYWJmYyZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.vCkW2gyoMa7oZ_xELmvDnrv1EbsfAn3HOYS3oEaxwzs)
 
@@ -35,24 +38,35 @@ MediaServer Clipper will automatically list audio and subtitle tracks and you ca
 
 ### Multiple video sources
 
-The example shows how to use it with Plex, but because this will work with any absolute path to any video, it is possible to use it with multiple sources to clip videos from anything on the drive.
+The example shows how to use it with Plex, but because this will work with any absolute path to any video,
+it is possible to use it with multiple sources to clip videos from anything on the drive.
 
-For example, if using docker, you can mount the `Plex` library to `/media` in the container, and some other directory with your personal video files to `/videos` for example. Then if you paste a path to `/videos/holiday_summer_2023.mp4` in the app, it will be able to clip it just like plex videos if the path was `/media/some_movie.mp4`.
+For example, if using docker, you can mount the `Plex` library to `/media` in the container, and some other
+directory with your personal video files to `/videos` for example. Then if you paste a path to
+`/videos/holiday_summer_2023.mp4` in the app, it will be able to clip it just like plex videos if the
+path was `/media/some_movie.mp4`.
 
-You can even combine it with another app that can download videos on demand. If the directory it stores its downloads is mounted in the Clipper container, it will be able to make clips from it.
+You can even combine it with another app that can download videos on demand. If the directory it stores its
+downloads is mounted in the Clipper container, it will be able to make clips from it.
 
 
 Environment Variables
 ---------------------
 
-All environment variables have a default and are optional, but setting these allows you to customize the behaviour of the app.
+All environment variables have a default and are optional, but setting these allows you to customize the
+behaviour of the app.
 
 * `APP_NAME`: defines the name of the app on the webpage. Default is `Media Server Clipper`.
-* `OUTPUT_PATH`: defines the directory in which the app will store the clips. Default is the `output` directory where the app is started from (`/app/output` in docker container).
-* `PUBLIC_LINK_PREFIX`: defines a different base URL to the clips directory that will be used when clicking the `Share` button for a clip.
-This is especially useful if you want to protect the MediaServer Clipper instance behind a htpassword but wish to have a public static file server to share the clips with people without giving your credentials (see docker-compose example below). Default is to link to the clip hosted by the Media Server Clipper (so the `share` and `link` buttons will do the same thing).
+* `OUTPUT_PATH`: defines the directory in which the app will store the clips. Default is the `output`
+directory where the app is started from (`/app/output` in docker container).
+* `PUBLIC_LINK_PREFIX`: defines a different base URL to the clips directory that will be used when
+clicking the `Share` button for a clip. This is especially useful if you want to protect the MediaServer
+Clipper instance behind a htpassword but wish to have a public static file server to share the clips with
+people without giving your credentials (see docker-compose example below). Default is to link to the clip
+hosted by the Media Server Clipper (so the `share` and `link` buttons will do the same thing).
 * `MAX_CLIP_DURATION`: defines the maximum allowed duration (in seconds) of the clips. Default is 600 (10 minutes).
-* `MAX_QUEUE_SIZE`: number of jobs in queue after which the Clipper will reject new clip jobs. This does not count finished clips, only pending ones. Default is 4.
+* `MAX_QUEUE_SIZE`: number of jobs in queue after which the Clipper will reject new clip jobs. This does
+not count finished clips, only pending ones. Default is 4.
 
 Running from source
 -------------------
@@ -66,7 +80,8 @@ You need to have `ffmpeg` and the `DejaVu` fonts installed.
 Docker
 ------
 
-Docker is the recommended approach to run this application. Use this command to run the image (this exposes it on port 9987):
+Docker is the recommended approach to run this application. Use this command to run the image
+(this exposes it on port 9987):
 
     docker run -d --name paveyry/mediaserver-clipper -p 9987:8000 -v ./media:/media -v ./clips:/app/output mediaserver-clipper
 
@@ -116,4 +131,5 @@ Docker-compose examples
             - ./clips:/usr/share/nginx/html:ro
 ```
 
-Note that the `download` and `link` buttons will still link to the mediaserverclipper url, only the `share` button use the URL from `PUBLIC_LINK_PREFIX` (the `static_clips` nginx instance here)
+Note that the `download` and `link` buttons will still link to the mediaserverclipper url, only
+the `share` button use the URL from `PUBLIC_LINK_PREFIX` (the `static_clips` nginx instance here)
