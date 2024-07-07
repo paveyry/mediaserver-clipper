@@ -1,4 +1,4 @@
-name: Cargo checks
+name: Build
 
 on: push
 
