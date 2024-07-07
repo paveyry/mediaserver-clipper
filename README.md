@@ -133,3 +133,16 @@ Docker-compose examples
 
 Note that the `download` and `link` buttons will still link to the mediaserverclipper url, only
 the `share` button use the URL from `PUBLIC_LINK_PREFIX` (the `static_clips` nginx instance here)
+
+Development Roadmap (upcoming improvements)
+-------------------------------------------
+
+From highest to lowest priority:
+
+* Search engine to lookup files without having the exact path
+* Sorting clips in grid from most recent to oldest
+* Selecting clip resolution
+* Documentation
+* Better logging
+* Get rid of std::thread and use rocket's tokio runtime instead
+* Asynchronously detect changes in the pending queue from front-end without refresh
