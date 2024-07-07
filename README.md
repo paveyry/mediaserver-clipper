@@ -66,13 +66,9 @@ You need to have `ffmpeg` and the `DejaVu` fonts installed.
 Docker
 ------
 
-Docker is the recommended approach to run this application. To build the image, checkout in the root directory of this repository and run:
+Docker is the recommended approach to run this application. Use this command to run the image (this exposes it on port 9987):
 
-    docker build -t mediaserver-clipper .
-
-Then run the image (this exposes it on port 9987):
-
-    docker run -d --name mediaserver-clipper -p 9987:8000 -v ./media:/media -v ./clips:/app/output mediaserver-clipper
+    docker run -d --name paveyry/mediaserver-clipper -p 9987:8000 -v ./media:/media -v ./clips:/app/output mediaserver-clipper
 
 Docker-compose examples
 -----------------------
@@ -86,7 +82,7 @@ Docker-compose examples
         - ./media:/media
 
     mediaserverclipper:
-        image: mediaserver-clipper
+        image: paveyry/mediaserver-clipper
         ports:
             - 9987:8000
         volumes:
@@ -103,7 +99,7 @@ Docker-compose examples
         - ./media:/media
 
     mediaserverclipper: # This can be protected by a htpassword
-        image: mediaserver-clipper
+        image: paveyry/mediaserver-clipper
         ports:
             - 9987:8000
         environment:
