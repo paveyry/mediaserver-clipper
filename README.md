@@ -1,6 +1,9 @@
 MediaServer Clipper
 ===================
 
+Description
+-----------
+
 This application written in Rust serves a web application that allows users to extract clips from
 videos in their media server (Plex, Jellyfin, etc.). 
 
@@ -78,8 +81,6 @@ Docker-compose examples
         image: mediaserver-clipper
         ports:
             - 9987:8000
-        environment:
-            - PUBLIC_LINK_PREFIX=https://yourdomain.tld:9988
         volumes:
             - ./media:/media # mount it the same way as in plex/jellyfin
             - ./clips:/app/output
