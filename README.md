@@ -50,6 +50,8 @@ To run the app locally, install the rust toolchain (https://rustup.rs/) and run:
 
     cargo run --release
 
+You need to have `ffmpeg` and the `DejaVu` fonts installed.
+
 Docker
 ------
 
