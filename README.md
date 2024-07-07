@@ -33,6 +33,14 @@ MediaServer Clipper will automatically list audio and subtitle tracks and you ca
 ![Videos show in a grid](https://private-user-images.githubusercontent.com/3884900/346306047-111ab26e-781e-4e49-a642-7a846fdc1e49.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjAzMTU0NDcsIm5iZiI6MTcyMDMxNTE0NywicGF0aCI6Ii8zODg0OTAwLzM0NjMwNjA0Ny0xMTFhYjI2ZS03ODFlLTRlNDktYTY0Mi03YTg0NmZkYzFlNDkucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI0MDcwNyUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNDA3MDdUMDExOTA3WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9ZWViYjlkZGNkZWE4MjVkOTUyZDBjYTIzOTFmZDA1YmJhZjAxODYzY2I2ZDFiYmI0YWQyZWViNTRjMWViZDM2OSZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.CMHoH2E-KTi28YD0i0rZ4jkV_CO-a20sj3-j8wdhcf4)
 
 
+### Multiple video sources
+
+The example shows how to use it with Plex, but because this will work with any absolute path to any video, it is possible to use it with multiple sources to clip videos from anything on the drive.
+
+For example, if using docker, you can mount the `Plex` library to `/media` in the container, and some other directory with your personal video files to `/videos` for example. Then if you paste a path to `/videos/holiday_summer_2023.mp4` in the app, it will be able to clip it just like plex videos if the path was `/media/some_movie.mp4`.
+
+You can even combine it with another app that can download videos on demand. If the directory it stores its downloads is mounted in the Clipper container, it will be able to make clips from it.
+
 
 Environment Variables
 ---------------------
