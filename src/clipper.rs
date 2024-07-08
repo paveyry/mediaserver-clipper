@@ -188,10 +188,9 @@ fn work(rx: mpsc::Receiver<Job>, pending_jobs: Arc<Mutex<HashSet<String>>>) {
 }
 
 fn run_job(job: &Job) -> Result<()> {
-    let mut cmd = Command::new("ffmpeg");
-
     log::info!("starting file encoding: {}", &job.clip_name);
 
+    let mut cmd = Command::new("ffmpeg");
     cmd.args(["-i", &job.source_file_path])
         .args(["-ss", &job.start_time.to_string()])
         .args(["-to", &job.end_time.to_string()])
