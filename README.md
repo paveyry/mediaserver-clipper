@@ -45,7 +45,8 @@ path was `/media/some_movie.mp4`.
 You can even combine it with another app that can download videos on demand. If the directory it stores its
 downloads is mounted in the Clipper container, it will be able to make clips from it.
 
-### How the search engine works
+How the search engine works
+---------------------------
 
 Files are indexed when the application start and a refresh of the index can be triggered using the button at the top of the search results later.
 
