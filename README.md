@@ -15,25 +15,20 @@ it makes it compatible with absolutely any media server.
 How to use
 ----------
 
-On Plex, you can click the triple-dot button while watching a video and then `Get Info` in order
-to get the absolute path to the file. If your Plex instance is running on the same system as
-MediaServer Clipper or if you mounted the media volume the same way both in your Plex instance,
-then this path will also work for the Clipper app to access it.
+Media Server Clipper supports two ways to select the source for a clip:
+
+* Enter the direct path to the file. On Plex Web, you can click the triple-dot button while watching
+a video and then `Get Info` in order to get the absolute path to the file. If your Plex instance is
+running on the same system as MediaServer Clipper or if you mounted the media volume the same way
+both in your Plex instance, then this path will also work for the Clipper app to access it.
+
+* Search for files indexed by Media Server Clipper. This can only find files in the libraries that
+you have registered at setup (unlike direct path which can access any readable file), but it allows
+you to find a file by just writing a few letters. 
 
 MediaServer Clipper will automatically list audio and subtitle tracks and you can select which
 audio you want to use and whether or not you want to burn in subtitles in the clip.
 
-![Get File Info in Plex](https://github.com/paveyry/mediaserver-clipper/assets/3884900/9018bcda-649e-4179-991b-5de4d11acd17)
-
-![Copy file path](https://github.com/paveyry/mediaserver-clipper/assets/3884900/b9b7269e-dfb2-439e-b989-6f630e0280b3)
-
-![Paste in Media Server Clipper](https://github.com/paveyry/mediaserver-clipper/assets/3884900/eb3eb996-5d80-4415-bb29-5b2dc542da99)
-
-![Configure the clip settings](https://github.com/paveyry/mediaserver-clipper/assets/3884900/6d8ed6a6-6c30-4328-8b81-f0ee8a97c8e2)
-
-![Job is added to queue and the clip appears on the home page once finished](https://github.com/paveyry/mediaserver-clipper/assets/3884900/92ae6d47-9a04-45f0-b0ae-711522a2ba2e)
-
-![Videos show in a grid](https://github.com/paveyry/mediaserver-clipper/assets/3884900/f26af4d4-75de-4fd7-921a-2046ddffd468)
 
 ### Multiple video sources
 
@@ -47,6 +42,43 @@ path was `/media/some_movie.mp4`.
 
 You can even combine it with another app that can download videos on demand. If the directory it stores its
 downloads is mounted in the Clipper container, it will be able to make clips from it.
+
+### How the search engine works
+
+Files are indexed when the application start and a refresh of the index can be triggered using the button at the top of the search results later.
+
+You can put several words in your search query separated by whitespace. The search engine will return any file for which the path (either the file name or any of its parent directories) contains **all** the words of your search. Search is case-insensitive. For example, with the following library:
+
+    library
+    ├── An.Awesome.TV.Show.x264.EN
+    │   ├── S01
+    │   │   ├── E01.mp4
+    │   │   ├── E02.mp4
+    │   │   └── E03.mp4
+    │   └── S02
+    │       ├── E01.mp4
+    │       ├── E02.mp4
+    │       └── E03.mp4
+    └── The.Incredible.Series.x264.EN
+        ├── S01
+        │   ├── E01.mp4
+        │   ├── E02.mp4
+        │   └── E03.mp4
+        └── S02
+            ├── E01.mp4
+            ├── E02.mp4
+            └── E03.mp4
+
+Searching for `awe` will return all episodes from both seasons of "An Awesome TV Show".
+
+Searching for `awe s01` will return only the season 1 episodes of "An Awesome TV Show".
+
+Searching for `awe s01 e02` will return episode s01e02 "An Awesome TV Show".
+
+Searching for `incred s01 e02` will return episode s01e02 "The Incredible Series".
+
+Searching for `s01 e02` will return episodes s01e02 of both shows.
+
 
 
 Environment Variables
@@ -66,6 +98,8 @@ hosted by the Media Server Clipper (so the `share` and `link` buttons will do th
 * `MAX_CLIP_DURATION`: defines the maximum allowed duration (in seconds) of the clips. Default is 600 (10 minutes).
 * `MAX_QUEUE_SIZE`: number of jobs in queue after which the Clipper will reject new clip jobs. This does
 not count finished clips, only pending ones. Default is 4.
+* `SEARCH_DIRS`: list (comma-separated) of paths in which the search engine should be indexing files. If empty or not set, the search engine is disabled and the search field does not appear in the app. Default is empty. Example: `SEARCH_DIRS="/media,/personal/videos,/jellyfin/media"`
+* `SEARCH_FILE_EXTS`: list (comma-separated) of file extensions (without including the dot) that should be indexed by the search engine. If empty or not set, all files will be indexed. Default is empty (no filtering). Example: `SEARCH_FILE_EXT="mp4,mkv,avi,mov"`
 
 Running from source
 -------------------
@@ -99,6 +133,8 @@ mediaserverclipper:
     image: paveyry/mediaserver-clipper
     ports:
         - 9987:8000
+    environment:
+        - SEARCH_DIRS="/media"
     volumes:
         - ./media:/media # mount it the same way as in plex/jellyfin
         - ./clips:/app/output
@@ -117,6 +153,7 @@ mediaserverclipper: # This can be protected by a htpassword
     ports:
         - 9987:8000
     environment:
+        - SEARCH_DIRS="/media"
         - PUBLIC_LINK_PREFIX=https://yourdomain.tld:9988 # Share links wil link to static_clips
     volumes:
         - ./media:/media
@@ -146,3 +183,12 @@ From highest to lowest priority:
 * Better logging
 * Get rid of std::thread and use rocket's tokio runtime instead
 * Asynchronously detect changes in the pending queue from front-end without refresh
+
+Appendices
+----------
+
+### Getting direct link to file in Plex web
+
+![Get File Info in Plex](https://github.com/paveyry/mediaserver-clipper/assets/3884900/9018bcda-649e-4179-991b-5de4d11acd17)
+
+![Copy file path](https://github.com/paveyry/mediaserver-clipper/assets/3884900/b9b7269e-dfb2-439e-b989-6f630e0280b3)
