@@ -12,7 +12,8 @@ unlike clipplex, mediaserver-clipper does not rely on any specific mediaserver A
 path to the file directly. This makes it slightly less easy to use but much simpler to setup and
 it makes it compatible with absolutely any media server.
 
-![demo gif](https://github.com/paveyry/mediaserver-clipper/assets/3884900/c532f0e3-280b-4037-8bf8-d41690e21381)
+[Demo](https://github.com/paveyry/mediaserver-clipper/assets/3884900/22eae62c-09e2-4580-8d9c-c60b60fa8baf)
+
 
 How to use
 ----------
