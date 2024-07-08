@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use std::fmt;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -175,16 +175,18 @@ impl Worker {
 }
 
 fn work(rx: mpsc::Receiver<Job>, pending_jobs: Arc<Mutex<HashSet<String>>>) {
-    println!("worker has started...");
+    log::info!("worker has started...");
     while let Ok(job) = rx.recv() {
         if let Err(e) = run_job(&job, Arc::clone(&pending_jobs)) {
-            println!("{e}");
+            log::error!("{e}");
         }
     }
 }
 
 fn run_job(job: &Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> Result<()> {
     let mut cmd = Command::new("ffmpeg");
+
+    log::info!("starting file encoding: {}", &job.clip_name);
 
     cmd.args(["-i", &job.source_file_path])
         .args(["-ss", &job.start_time.to_string()])
@@ -220,7 +222,9 @@ fn run_job(job: &Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> Result<()> {
         }
     }
 
-    cmd.arg(&job.out_file_path);
+    cmd.arg(&job.out_file_path)
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit());
 
     cmd.output()?;
 
@@ -228,5 +232,6 @@ fn run_job(job: &Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> Result<()> {
         .lock()
         .expect("fatal error; lock holder has panicked")
         .remove(&job.clip_name);
+    log::info!("file transcoding succeded: {}", &job.clip_name);
     Ok(())
 }
