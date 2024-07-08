@@ -177,13 +177,17 @@ impl Worker {
 fn work(rx: mpsc::Receiver<Job>, pending_jobs: Arc<Mutex<HashSet<String>>>) {
     log::info!("worker has started...");
     while let Ok(job) = rx.recv() {
-        if let Err(e) = run_job(&job, Arc::clone(&pending_jobs)) {
+        if let Err(e) = run_job(&job) {
             log::error!("{e}");
         }
+        pending_jobs
+            .lock()
+            .expect("fatal error; lock holder has panicked")
+            .remove(&job.clip_name);
     }
 }
 
-fn run_job(job: &Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> Result<()> {
+fn run_job(job: &Job) -> Result<()> {
     let mut cmd = Command::new("ffmpeg");
 
     log::info!("starting file encoding: {}", &job.clip_name);
@@ -228,10 +232,6 @@ fn run_job(job: &Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> Result<()> {
 
     cmd.output()?;
 
-    pending_jobs
-        .lock()
-        .expect("fatal error; lock holder has panicked")
-        .remove(&job.clip_name);
     log::info!("file transcoding succeded: {}", &job.clip_name);
     Ok(())
 }
