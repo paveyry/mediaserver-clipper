@@ -76,9 +76,9 @@ Searching for `awe` will return all episodes from both seasons of "An Awesome TV
 
 Searching for `awe s01` will return only the season 1 episodes of "An Awesome TV Show".
 
-Searching for `awe s01 e02` will return episode s01e02 "An Awesome TV Show".
+Searching for `awe s01 e02` will return episode s01e02 of "An Awesome TV Show".
 
-Searching for `incred s01 e02` will return episode s01e02 "The Incredible Series".
+Searching for `incred s01 e02` will return episode s01e02 of "The Incredible Series".
 
 Searching for `s01 e02` will return episodes s01e02 of both shows.
 
