@@ -119,7 +119,7 @@ Docker
 Docker is the recommended approach to run this application. Use this command to run the image
 (this exposes it on port 9987):
 
-    docker run -d --name paveyry/mediaserver-clipper -p 9987:8000 -v ./media:/media -v ./clips:/app/output mediaserver-clipper
+    docker run -d --name clipper -p 9987:8000 -v ./media:/media -v ./clips:/app/output paveyry/mediaserver-clipper:latest
 
 Docker-compose examples
 -----------------------
@@ -132,8 +132,8 @@ plex:
 volumes:
     - ./media:/media
 
-mediaserverclipper:
-    image: paveyry/mediaserver-clipper
+clipper:
+    image: paveyry/mediaserver-clipper:latest
     ports:
         - 9987:8000
     environment:
@@ -151,8 +151,8 @@ plex:
 volumes:
     - ./media:/media
 
-mediaserverclipper: # This can be protected by a htpassword
-    image: paveyry/mediaserver-clipper
+clipper: # This can be protected by a htpassword
+    image: paveyry/mediaserver-clipper:latest
     ports:
         - 9987:8000
     environment:
@@ -162,7 +162,7 @@ mediaserverclipper: # This can be protected by a htpassword
         - ./media:/media
         - ./clips:/app/output
 
-static_clips: # This has read-only access so it can be safely exposed without auth
+public_clips: # This has read-only access so it can be safely exposed without auth
     image: nginx
     ports:
         - 9988:80 # this is https://yourdomain.tld:9988 linked in PUBLIC_LINK_PREFIX
@@ -170,8 +170,8 @@ static_clips: # This has read-only access so it can be safely exposed without au
         - ./clips:/usr/share/nginx/html:ro
 ```
 
-Note that the `download` and `link` buttons will still link to the mediaserverclipper url, only
-the `share` button use the URL from `PUBLIC_LINK_PREFIX` (the `static_clips` nginx instance here)
+Note that the `download` and `link` buttons will still link to the clipper url, only
+the `share` button use the URL from `PUBLIC_LINK_PREFIX` (the `static_clips` nginx instance in this example)
 
 Development Roadmap (upcoming improvements)
 -------------------------------------------
