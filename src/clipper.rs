@@ -6,6 +6,8 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
 
+use anyhow::{Error, Result};
+
 #[derive(Debug, Clone)]
 pub struct VideoTime(u8, u8, u8);
 
@@ -25,7 +27,7 @@ impl VideoTime {
         Self(hours, minutes, seconds)
     }
 
-    fn from_strings(hours: &str, minutes: &str, seconds: &str) -> anyhow::Result<Self> {
+    fn from_strings(hours: &str, minutes: &str, seconds: &str) -> Result<Self> {
         Ok(Self::new(
             str_to_u8(hours)?,
             str_to_u8(minutes)?,
@@ -46,23 +48,23 @@ pub fn validate_start_end(
     end_hour: &str,
     end_min: &str,
     end_sec: &str,
-) -> anyhow::Result<(VideoTime, VideoTime)> {
+) -> Result<(VideoTime, VideoTime)> {
     let start_time = VideoTime::from_strings(start_hour, start_min, start_sec)?;
     let end_time = VideoTime::from_strings(end_hour, end_min, end_sec)?;
 
     let duration = end_time.seconds() as i64 - start_time.seconds() as i64;
     if duration <= 0 {
-        return Err(anyhow::Error::msg("start time should be before end time"));
+        return Err(Error::msg("start time should be before end time"));
     }
     if duration as u64 > max_seconds {
-        return Err(anyhow::Error::msg(format!(
+        return Err(Error::msg(format!(
             "clip duration should not exceed {max_seconds} seconds"
         )));
     }
     Ok((start_time, end_time))
 }
 
-fn str_to_u8(s: &str) -> anyhow::Result<u8> {
+fn str_to_u8(s: &str) -> Result<u8> {
     if s.is_empty() {
         return Ok(0);
     }
@@ -137,7 +139,7 @@ impl Worker {
         }
     }
 
-    pub fn add_job(&self, job: Job) -> anyhow::Result<()> {
+    pub fn add_job(&self, job: Job) -> Result<()> {
         let mut job = job;
         // avoid duplicate job ids
         let mut job_id = job.clip_name.clone();
@@ -160,7 +162,7 @@ impl Worker {
                 .expect("fatal error; lock holder has panicked");
 
             if pj.len() >= self.max_queue_size {
-                return Err(anyhow::Error::msg(format!(
+                return Err(Error::msg(format!(
                     "maximum job queue size has been reached: {}",
                     self.max_queue_size
                 )));
@@ -175,13 +177,13 @@ impl Worker {
 fn work(rx: mpsc::Receiver<Job>, pending_jobs: Arc<Mutex<HashSet<String>>>) {
     println!("worker has started...");
     while let Ok(job) = rx.recv() {
-        if let Err(e) = run_job(job, Arc::clone(&pending_jobs)) {
+        if let Err(e) = run_job(&job, Arc::clone(&pending_jobs)) {
             println!("{e}");
         }
     }
 }
 
-fn run_job(job: Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> anyhow::Result<()> {
+fn run_job(job: &Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> Result<()> {
     let mut cmd = Command::new("ffmpeg");
 
     cmd.args(["-i", &job.source_file_path])
@@ -203,7 +205,7 @@ fn run_job(job: Job, pending_jobs: Arc<Mutex<HashSet<String>>>) -> anyhow::Resul
     if let Some((a_idx, _)) = job.audio_track.split_once(':') {
         cmd.args(["-map".to_string(), format!("0:{}", a_idx)]);
     } else {
-        Err(anyhow::Error::msg("audio_track is missing or invalid"))?;
+        Err(Error::msg("audio_track is missing or invalid"))?;
     }
 
     if !job.subtitle_track.is_empty() {

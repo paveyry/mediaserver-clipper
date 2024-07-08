@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::str::FromStr;
 
+use anyhow::Result;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -23,12 +24,12 @@ struct StreamTags {
     title: Option<String>,
 }
 
-pub fn get_track_data(file_path: &str) -> anyhow::Result<(Vec<String>, Vec<String>)> {
+pub fn get_track_data(file_path: &str) -> Result<(Vec<String>, Vec<String>)> {
     let pb = PathBuf::from_str(file_path)?;
     Ok((list_audio_tracks(&pb)?, list_subtitle_tracks(&pb)?))
 }
 
-pub fn list_audio_tracks(file_path: &PathBuf) -> anyhow::Result<Vec<String>> {
+pub fn list_audio_tracks(file_path: &PathBuf) -> Result<Vec<String>> {
     // TODO: return a dict and avoid string split to extract value
 
     let output = Command::new("ffprobe")
@@ -58,7 +59,7 @@ pub fn list_audio_tracks(file_path: &PathBuf) -> anyhow::Result<Vec<String>> {
     Ok(audio_tracks)
 }
 
-pub fn list_subtitle_tracks(file_path: &PathBuf) -> anyhow::Result<Vec<String>> {
+pub fn list_subtitle_tracks(file_path: &PathBuf) -> Result<Vec<String>> {
     // TODO: return a dict and avoid string split to extract value
 
     let output = Command::new("ffprobe")

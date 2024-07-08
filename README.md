@@ -140,6 +140,7 @@ From highest to lowest priority:
 
 * Search engine to lookup files without having the exact path
 * Sorting clips in grid from most recent to oldest
+* Better error messages when ffprobe and ffmpeg fail
 * Selecting clip resolution
 * Documentation
 * Better logging

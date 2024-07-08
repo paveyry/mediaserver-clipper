@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark"/>
+    <link rel="stylesheet" href="/public/css/pico.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
+    <title>{{ app_name }} - Search results</title>
+</head>
+<body>
+<main class="container">
+    <h1>{{ app_name }}</h1>
+    
+    <a href="/"><button class="primary"><i class="fa-solid fa-house"></i></button></a>
+    <a href="/refresh_index"><button class="secondary"><i class="fa-solid fa-screwdriver-wrench"></i> File is missing because it was recently added? Refresh the file index</button></a>
+    <br/>
+    <br/>
+
+    <form method="POST" enctype="multipart/form-data" action="/search">
+        <fieldset role="group">
+            <input type="text"
+                name="search_string"
+                placeholder="Search words"
+                aria-label="Search words"
+                required
+            />
+            <button type="submit">Search</button>
+        </fieldset>
+    </form>
+
+    <h2>Search Results</h2>
+
+    {{#each results}}
+        <form method="post" action="/">
+            <input type="hidden" name="file_path" value="{{this}}"/>
+            <button type="submit" class="secondary" style="text-align:left;">{{this}}</button>
+        </form>
+    {{/each}}
+
+</main>
+</body>
+</html>

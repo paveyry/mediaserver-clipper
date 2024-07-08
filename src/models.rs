@@ -7,6 +7,12 @@ pub struct NewClipRequest {
 }
 
 #[derive(FromForm, Debug)]
+pub struct SearchRequest {
+    #[field(validate=len(1..))]
+    pub(crate) search_string: String,
+}
+
+#[derive(FromForm, Debug)]
 pub struct ConfigureClipRequest {
     #[field(validate=len(1..))]
     pub(crate) source_file: String,
