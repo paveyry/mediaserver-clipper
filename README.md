@@ -12,6 +12,8 @@ unlike clipplex, mediaserver-clipper does not rely on any specific mediaserver A
 path to the file directly. This makes it slightly less easy to use but much simpler to setup and
 it makes it compatible with absolutely any media server.
 
+![demo gif](https://github.com/paveyry/mediaserver-clipper/assets/3884900/c532f0e3-280b-4037-8bf8-d41690e21381)
+
 How to use
 ----------
 
@@ -28,7 +30,6 @@ you to find a file by just writing a few letters.
 
 MediaServer Clipper will automatically list audio and subtitle tracks and you can select which
 audio you want to use and whether or not you want to burn in subtitles in the clip.
-
 
 ### Multiple video sources
 
