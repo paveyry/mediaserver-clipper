@@ -101,8 +101,8 @@ hosted by the Media Server Clipper (so the `share` and `link` buttons will do th
 * `MAX_CLIP_DURATION`: defines the maximum allowed duration (in seconds) of the clips. Default is 600 (10 minutes).
 * `MAX_QUEUE_SIZE`: number of jobs in queue after which the Clipper will reject new clip jobs. This does
 not count finished clips, only pending ones. Default is 4.
-* `SEARCH_DIRS`: list (comma-separated) of paths in which the search engine should be indexing files. If empty or not set, the search engine is disabled and the search field does not appear in the app. Default is empty. Example: `SEARCH_DIRS="/media,/personal/videos,/jellyfin/media"`
-* `SEARCH_FILE_EXTS`: list (comma-separated) of file extensions (without including the dot) that should be indexed by the search engine. If empty or not set, all files will be indexed. Default is empty (no filtering). Example: `SEARCH_FILE_EXT="mp4,mkv,avi,mov"`
+* `SEARCH_DIRS`: list (comma-separated) of paths in which the search engine should be indexing files. If empty or not set, the search engine is disabled and the search field does not appear in the app. Default is empty. Example: `SEARCH_DIRS=/media,/personal/videos,/jellyfin/media`
+* `SEARCH_FILE_EXTS`: list (comma-separated) of file extensions (without including the dot) that should be indexed by the search engine. If empty or not set, all files will be indexed. Default is empty (no filtering). Example: `SEARCH_FILE_EXT=mp4,mkv,avi,mov`
 
 Running from source
 -------------------
@@ -137,7 +137,7 @@ mediaserverclipper:
     ports:
         - 9987:8000
     environment:
-        - SEARCH_DIRS="/media"
+        - SEARCH_DIRS=/media
     volumes:
         - ./media:/media # mount it the same way as in plex/jellyfin
         - ./clips:/app/output
@@ -156,7 +156,7 @@ mediaserverclipper: # This can be protected by a htpassword
     ports:
         - 9987:8000
     environment:
-        - SEARCH_DIRS="/media"
+        - SEARCH_DIRS=/media
         - PUBLIC_LINK_PREFIX=https://yourdomain.tld:9988 # Share links wil link to static_clips
     volumes:
         - ./media:/media
