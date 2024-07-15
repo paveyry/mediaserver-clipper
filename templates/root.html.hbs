@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark"/>
     <link rel="stylesheet" href="/public/css/pico.min.css">
+    <link rel="stylesheet" href="/public/css/custom.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
     <link rel="icon" type="image/png" href="/public/favicon.png">
+    <style>
+
+
+    </style>
     <title>{{app_name}}</title>
 </head>
 <body>
@@ -57,44 +62,68 @@
 
     <br/>
     <div id="Clips">
-        {{#each clips}}
-            <div class="grid">
+        {{#if audio_clips}}
+            {{#if video_clips}}
+                <!-- Only display section titles if there are both audio and video clips -->
+                <h3>Audio clips</h3>
+            {{/if}}
+            {{#each audio_clips}}
                 <div>
-                    <div class="grid">
-                        <div>
-                            <a href="{{this.0.url}}" download><button class="outline primary"><i class="fa-solid fa-download"></i></button></a>
-                            <a href="{{this.0.url}}"><button class="outline primary"><i class="fa-solid fa-link"></i></button></a>
-                            <a href="{{this.0.public_url}}"><button class="outline primary"><i class="fa-solid fa-share-nodes"></i></button></a>
-                            <a href="/delete?clip_name={{this.0.clip_name}}"><button class="outline primary"><i class="fa-solid fa-trash"></i></button></a>
-                        </div>
-                        <h2 class="video-title">{{this.0.clip_name}}</h2>
-                    </div>
-                    <video width="100%" controls>
-                        <source src="{{this.0.url}}" type="video/mp4"/>
-                    </video>
+                    <label>{{this.clip_name}}
+                    <audio controls><source src="{{this.url}}" type="audio/mp3"/></audio>
+                    <a href="{{this.url}}" download><button class="outline primary"><i class="fa-solid fa-download"></i></button></a>
+                    <a href="{{this.url}}"><button class="outline primary"><i class="fa-solid fa-link"></i></button></a>
+                    <a href="{{this.public_url}}"><button class="outline primary"><i class="fa-solid fa-share-nodes"></i></button></a>
+                    <a href="/delete?file_name={{this.file_name}}"><button class="outline primary"><i class="fa-solid fa-trash"></i></button></a></label>
                 </div>
-
-                {{#if this.1.clip_name }}
-                <div>
-                    <div class="grid">
-                        <div>
-                            <a href="{{this.1.url}}" download><button class="outline primary"><i class="fa-solid fa-download"></i></button></a>
-                            <a href="{{this.1.url}}"><button class="outline primary"><i class="fa-solid fa-link"></i></button></a>
-                            <a href="{{this.1.public_url}}"><button class="outline primary"><i class="fa-solid fa-share-nodes"></i></button></a>
-                            <a href="/delete?clip_name={{this.1.clip_name}}"><button class="outline primary"><i class="fa-solid fa-trash"></i></button></a>
-                        </div>
-                        <h2 class="video-title">{{this.1.clip_name}}</h2>
-                    </div>
-                    <video width="100%" controls>
-                        <source src="{{this.1.url}}" type="video/mp4"/>
-                    </video>
-                </div>
-                {{else}}
-                <div></div>
-                {{/if}}
-            </div>
+            {{/each}}
             <br/>
-        {{/each}}
+        {{/if}}
+            
+        {{#if video_clips}}
+            {{#if audio_clips}}
+                <!-- Only display section titles if there are both audio and video clips -->
+                <h3>Video clips</h3>
+            {{/if}}
+            {{#each video_clips}}
+                <div class="grid">
+                    <div>
+                        <div class="grid">
+                            <div>
+                                <a href="{{this.0.url}}" download><button class="outline primary"><i class="fa-solid fa-download"></i></button></a>
+                                <a href="{{this.0.url}}"><button class="outline primary"><i class="fa-solid fa-link"></i></button></a>
+                                <a href="{{this.0.public_url}}"><button class="outline primary"><i class="fa-solid fa-share-nodes"></i></button></a>
+                                <a href="/delete?file_name={{this.0.file_name}}"><button class="outline primary"><i class="fa-solid fa-trash"></i></button></a>
+                            </div>
+                            <h2 class="video-title">{{this.0.clip_name}}</h2>
+                        </div>
+                        <video controls>
+                            <source src="{{this.0.url}}" type="video/mp4"/>
+                        </video>
+                    </div>
+
+                    {{#if this.1.clip_name }}
+                    <div>
+                        <div class="grid">
+                            <div>
+                                <a href="{{this.1.url}}" download><button class="outline primary"><i class="fa-solid fa-download"></i></button></a>
+                                <a href="{{this.1.url}}"><button class="outline primary"><i class="fa-solid fa-link"></i></button></a>
+                                <a href="{{this.1.public_url}}"><button class="outline primary"><i class="fa-solid fa-share-nodes"></i></button></a>
+                                <a href="/delete?file_name={{this.1.file_name}}"><button class="outline primary"><i class="fa-solid fa-trash"></i></button></a>
+                            </div>
+                            <h2 class="video-title">{{this.1.clip_name}}</h2>
+                        </div>
+                        <video controls>
+                            <source src="{{this.1.url}}" type="video/mp4"/>
+                        </video>
+                    </div>
+                    {{else}}
+                    <div></div>
+                    {{/if}}
+                </div>
+                <br/>
+            {{/each}}
+        {{/if}}
     </div>
 </main>
 </body>

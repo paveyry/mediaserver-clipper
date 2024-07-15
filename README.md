@@ -4,13 +4,24 @@ MediaServer Clipper ![](https://github.com/paveyry/mediaserver-clipper/actions/w
 Description
 -----------
 
-This application written in Rust serves a web application that allows users to extract clips from
+This application written in Rust serves a web application that allows users to extract clips (audio or video) from
 videos in their media server (Plex, Jellyfin, etc.). 
 
 This is loosely inspired from jo-nike's clipplex (https://github.com/jo-nike/clipplex). However,
 unlike clipplex, mediaserver-clipper does not rely on any specific mediaserver API and uses the
 path to the file directly. This makes it slightly less easy to use but much simpler to setup and
 it makes it compatible with absolutely any media server.
+
+Features:
+
+* File search in selected library directories (and subdirectories)
+* Clip creation from any accessible file using the direct path
+* Audio track selection
+* Subtitle track selection for subtitle burn-in
+* Video clips
+* Audio-only clips (mp3)
+* External share links
+* File management (remove clips directly from the UI)
 
 [Demo](https://github.com/paveyry/mediaserver-clipper/assets/3884900/22eae62c-09e2-4580-8d9c-c60b60fa8baf)
 
@@ -178,7 +189,6 @@ Development Roadmap (upcoming improvements)
 
 From highest to lowest priority:
 
-* Search engine to lookup files without having the exact path
 * Sorting clips in grid from most recent to oldest
 * Better error messages when ffprobe and ffmpeg fail
 * Selecting clip resolution

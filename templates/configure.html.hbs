@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark"/>
     <link rel="stylesheet" href="/public/css/pico.min.css">
+    <link rel="stylesheet" href="/public/css/custom.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
     <link rel="icon" type="image/png" href="/public/favicon.png">
     <title>{{ app_name }}</title>
@@ -60,14 +61,18 @@
                         <option value="{{this}}">{{this}}</option>
                     {{/each}}
                 </select>
-            </div>
-            <div>
+            {{!-- </div>
+            <div> --}}
                 <label>Subtitle track</label>
                 <select name="subtitle_track">
                     {{#each subtitle_tracks}}
                         <option value="{{this}}">{{this}}</option>
                     {{/each}}
                 </select>
+            </div>
+            <div>
+                <label>Audio only (mp3)</label>
+                <input type="checkbox" name="audio_only" role="switch"/>
             </div>
             <div></div>
             <div></div>

@@ -21,16 +21,31 @@ pub async fn root(app: &State<App>) -> Template {
 
     let pending = app.clipper.jobs_in_progress();
 
-    match clips::video_pairs_in_directory(&app.out_path, &app.public_link_prefix, &pending) {
-        Ok(clips) => Template::render(
-            "root",
-            context! { app_name: &app.app_name, clips: clips, pending_jobs: pending, index_refreshing, search_enabled},
-        ),
-        Err(e) => render_error(vec![format!(
-            "Failed to list clips from output directory: {}",
-            e
-        )]),
-    }
+    let video_clips =
+        match clips::video_pairs_in_directory(&app.out_path, &app.public_link_prefix, &pending) {
+            Ok(clips) => clips,
+            Err(e) => {
+                return render_error(vec![format!(
+                    "Failed to list video clips from output directory: {}",
+                    e
+                )])
+            }
+        };
+    let audio_clips =
+        match clips::audio_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending) {
+            Ok(clips) => clips,
+            Err(e) => {
+                return render_error(vec![format!(
+                    "Failed to list audio clips from output directory: {}",
+                    e
+                )])
+            }
+        };
+
+    Template::render(
+        "root",
+        context! { app_name: &app.app_name, video_clips, audio_clips, pending_jobs: pending, index_refreshing, search_enabled},
+    )
 }
 
 #[post("/", data = "<form>")]
@@ -154,10 +169,10 @@ pub async fn create_clip(
     }
 }
 
-#[get("/delete?<clip_name>")]
-pub async fn delete_clip(clip_name: String, app: &State<App>) -> Template {
-    match clips::delete_file(&app.out_path, &clip_name) {
-        Ok(()) => render_message(format!("Clip {clip_name} was successfully removed")),
+#[get("/delete?<file_name>")]
+pub async fn delete_clip(file_name: String, app: &State<App>) -> Template {
+    match clips::delete_file(&app.out_path, &file_name) {
+        Ok(()) => render_message(format!("Clip {file_name} was successfully removed")),
         Err(e) => render_error(vec![format!("failed to remove file: {e}")]),
     }
 }
@@ -173,12 +188,15 @@ fn setup_job(app: &State<App>, ccr: &models::ConfigureClipRequest) -> Result<()>
         &ccr.end_sec,
     )?;
 
+    let ext = if ccr.audio_only { "mp3" } else { "mp4" };
+
     let out_file_path = format!(
-        "{}/{}.mp4",
+        "{}/{}.{}",
         app.out_path
             .to_str()
             .context("internal error: output path could not be read as string")?,
-        ccr.clip_name
+        ccr.clip_name,
+        ext
     );
 
     app.clipper.add_job(Job::new(
@@ -189,6 +207,7 @@ fn setup_job(app: &State<App>, ccr: &models::ConfigureClipRequest) -> Result<()>
         ccr.subtitle_track.to_string(),
         start_time,
         end_time,
+        ccr.audio_only,
     ))?;
     Ok(())
 }

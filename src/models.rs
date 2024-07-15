@@ -34,4 +34,6 @@ pub struct ConfigureClipRequest {
     pub(crate) end_min: String,
     #[field(validate=len(0..))]
     pub(crate) end_hour: String,
+    #[field(default = false)]
+    pub(crate) audio_only: bool,
 }

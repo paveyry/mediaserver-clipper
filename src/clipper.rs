@@ -86,9 +86,11 @@ pub struct Job {
     subtitle_track: String,
     start_time: VideoTime,
     end_time: VideoTime,
+    audio_only: bool,
 }
 
 impl Job {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         source_file_path: String,
         out_file_path: String,
@@ -97,6 +99,7 @@ impl Job {
         subtitle_track: String,
         start_time: VideoTime,
         end_time: VideoTime,
+        audio_only: bool,
     ) -> Self {
         Job {
             source_file_path,
@@ -106,6 +109,7 @@ impl Job {
             subtitle_track,
             start_time,
             end_time,
+            audio_only,
         }
     }
 }
@@ -196,16 +200,21 @@ fn run_job(job: &Job) -> Result<()> {
         .args(["-to", &job.end_time.to_string()])
         .args(["-preset", "fast"])
         .args(["-map_metadata", "-1"])
-        .args(["-map", "0:0"])
-        .args(["-c:v", "libx264"])
-        .args(["-c:a", "aac"])
-        .args(["-f", "mp4"])
         .args([
             "-metadata:g:0".to_string(),
             format!("title={}", &job.clip_name),
-        ])
-        .args(["-crf", "22"])
-        .args(["-pix_fmt", "yuv420p"]);
+        ]);
+
+    if job.audio_only {
+        cmd.args(["-c:a", "mp3"]).args(["-f", "mp3"]);
+    } else {
+        cmd.args(["-c:v", "libx264"])
+            .args(["-c:a", "aac"])
+            .args(["-map", "0:0"])
+            .args(["-f", "mp4"])
+            .args(["-crf", "22"])
+            .args(["-pix_fmt", "yuv420p"]);
+    }
 
     if let Some((a_idx, _)) = job.audio_track.split_once(':') {
         cmd.args(["-map".to_string(), format!("0:{}", a_idx)]);
@@ -213,7 +222,7 @@ fn run_job(job: &Job) -> Result<()> {
         Err(Error::msg("audio_track is missing or invalid"))?;
     }
 
-    if !job.subtitle_track.is_empty() {
+    if !job.subtitle_track.is_empty() && !job.audio_only {
         if let Some((st_idx, _)) = job.subtitle_track.split_once(':') {
             cmd.args([
                 "-vf".to_string(),
