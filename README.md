@@ -190,7 +190,6 @@ Development Roadmap (upcoming improvements)
 From highest to lowest priority:
 
 * Sorting clips in grid from most recent to oldest
-* Better error messages when ffprobe and ffmpeg fail
 * Selecting clip resolution
 * Documentation
 * Better logging

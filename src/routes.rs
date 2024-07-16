@@ -20,6 +20,7 @@ pub async fn root(app: &State<App>) -> Template {
         .map_or((false, false), |index| (true, index.is_refreshing()));
 
     let pending = app.clipper.jobs_in_progress();
+    let failures = app.clipper.failures();
 
     let video_clips =
         match clips::video_pairs_in_directory(&app.out_path, &app.public_link_prefix, &pending) {
@@ -44,7 +45,15 @@ pub async fn root(app: &State<App>) -> Template {
 
     Template::render(
         "root",
-        context! { app_name: &app.app_name, video_clips, audio_clips, pending_jobs: pending, index_refreshing, search_enabled},
+        context! {
+            app_name: &app.app_name,
+            video_clips,
+            audio_clips,
+            failures,
+            pending_jobs: pending,
+            index_refreshing,
+            search_enabled,
+        },
     )
 }
 
@@ -177,6 +186,12 @@ pub async fn delete_clip(file_name: String, app: &State<App>) -> Template {
     }
 }
 
+#[get("/clear_failures")]
+pub async fn clear_failures(app: &State<App>) -> Template {
+    app.clipper.clear_failures();
+    render_message("The list of failures was successfully cleared".to_string())
+}
+
 fn setup_job(app: &State<App>, ccr: &models::ConfigureClipRequest) -> Result<()> {
     let (start_time, end_time) = validate_start_end(
         app.max_clip_duration,
@@ -203,6 +218,7 @@ fn setup_job(app: &State<App>, ccr: &models::ConfigureClipRequest) -> Result<()>
         ccr.source_file.trim().to_string(),
         out_file_path,
         ccr.clip_name.to_string(),
+        format!("{}.{}", ccr.clip_name, ext),
         ccr.audio_track.to_string(),
         ccr.subtitle_track.to_string(),
         start_time,

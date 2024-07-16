@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 use std::fmt;
 use std::process::{Command, Stdio};
-use std::sync::mpsc;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{mpsc, Arc, RwLock};
 use std::thread;
 
 use anyhow::{Error, Result};
+
+const LOCK_ERROR: &str = "fatal error; lock holder has panicked";
 
 #[derive(Debug, Clone)]
 pub struct VideoTime(u8, u8, u8);
@@ -82,6 +82,7 @@ pub struct Job {
     source_file_path: String,
     out_file_path: String,
     clip_name: String,
+    file_name: String,
     audio_track: String,
     subtitle_track: String,
     start_time: VideoTime,
@@ -95,6 +96,7 @@ impl Job {
         source_file_path: String,
         out_file_path: String,
         clip_name: String,
+        file_name: String,
         audio_track: String,
         subtitle_track: String,
         start_time: VideoTime,
@@ -105,6 +107,7 @@ impl Job {
             source_file_path,
             out_file_path,
             clip_name,
+            file_name,
             audio_track,
             subtitle_track,
             start_time,
@@ -115,55 +118,44 @@ impl Job {
 }
 
 pub struct Worker {
-    pending_jobs: Arc<Mutex<HashSet<String>>>,
+    pending_jobs: Arc<RwLock<HashSet<String>>>,
     tx: mpsc::Sender<Job>,
     max_queue_size: usize,
+    failures: Arc<RwLock<Vec<String>>>,
 }
 
 impl Worker {
     pub fn new(max_queue_size: usize) -> Self {
         let (tx, rx) = mpsc::channel();
         let new_worker = Self {
-            pending_jobs: Arc::new(Mutex::new(HashSet::new())),
+            pending_jobs: Arc::new(RwLock::new(HashSet::new())),
             tx,
             max_queue_size,
+            failures: Arc::new(RwLock::new(Vec::new())),
         };
         let pending_jobs_arc = Arc::clone(&new_worker.pending_jobs);
+        let failures_arc = Arc::clone(&new_worker.failures);
         thread::spawn(move || {
-            work(rx, pending_jobs_arc);
+            work(rx, pending_jobs_arc, failures_arc);
         });
         new_worker
     }
 
+    pub fn clear_failures(&self) {
+        *self.failures.write().expect(LOCK_ERROR) = Vec::new();
+    }
+
+    pub fn failures(&self) -> Vec<String> {
+        self.failures.read().expect(LOCK_ERROR).clone()
+    }
+
     pub fn jobs_in_progress(&self) -> HashSet<String> {
-        if let Ok(r) = self.pending_jobs.lock() {
-            r.clone()
-        } else {
-            HashSet::default()
-        }
+        self.pending_jobs.read().expect(LOCK_ERROR).clone()
     }
 
     pub fn add_job(&self, job: Job) -> Result<()> {
-        let mut job = job;
-        // avoid duplicate job ids
-        let mut job_id = job.clip_name.clone();
-        let mut copy_idx = 0;
-        while self
-            .pending_jobs
-            .lock()
-            .expect("fatal error; lock holder has panicked")
-            .contains(&job_id)
         {
-            copy_idx += 1;
-            job_id = format!("{}_copy{}", job.clip_name, copy_idx);
-        }
-        job.clip_name = job_id;
-
-        {
-            let mut pj = self
-                .pending_jobs
-                .lock()
-                .expect("fatal error; lock holder has panicked");
+            let mut pj = self.pending_jobs.write().expect(LOCK_ERROR);
 
             if pj.len() >= self.max_queue_size {
                 return Err(Error::msg(format!(
@@ -171,23 +163,40 @@ impl Worker {
                     self.max_queue_size
                 )));
             }
-            pj.insert(job.clip_name.clone());
+
+            if pj.contains(&job.file_name) {
+                return Err(Error::msg(format!(
+                    "there is already a pending job called {}",
+                    &job.file_name
+                )));
+            }
+
+            pj.insert(job.file_name.clone());
         }
         self.tx.send(job)?;
         Ok(())
     }
 }
 
-fn work(rx: mpsc::Receiver<Job>, pending_jobs: Arc<Mutex<HashSet<String>>>) {
+fn work(
+    rx: mpsc::Receiver<Job>,
+    pending_jobs: Arc<RwLock<HashSet<String>>>,
+    failures: Arc<RwLock<Vec<String>>>,
+) {
     log::info!("worker has started...");
     while let Ok(job) = rx.recv() {
         if let Err(e) = run_job(&job) {
+            let err_msg = format!("clip '{}': {}", job.clip_name, e);
+            failures
+                .write()
+                .expect("fatal error; lock holder has panicked")
+                .push(err_msg);
             log::error!("{e}");
         }
         pending_jobs
-            .lock()
+            .write()
             .expect("fatal error; lock holder has panicked")
-            .remove(&job.clip_name);
+            .remove(&job.file_name);
     }
 }
 
@@ -195,7 +204,8 @@ fn run_job(job: &Job) -> Result<()> {
     log::info!("starting file encoding: {}", &job.clip_name);
 
     let mut cmd = Command::new("ffmpeg");
-    cmd.args(["-i", &job.source_file_path])
+    cmd.arg("-y")
+        .args(["-i", &job.source_file_path])
         .args(["-ss", &job.start_time.to_string()])
         .args(["-to", &job.end_time.to_string()])
         .args(["-preset", "fast"])

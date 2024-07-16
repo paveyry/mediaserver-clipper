@@ -37,6 +37,7 @@ fn app() -> _ {
                 routes::select_source,
                 routes::search_file,
                 routes::refresh_index,
+                routes::clear_failures,
             ],
         )
 }

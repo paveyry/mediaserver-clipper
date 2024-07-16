@@ -59,6 +59,17 @@
         </ul>
     </article>
     {{/if}}
+    {{#if failures}}
+    <article id="failures">
+        <h5>Failed clips</h5>
+        <ul>
+            {{#each failures}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+        <a href="/clear_failures"><button>Clear failures</button></a>
+    </article>
+    {{/if}}
 
     <br/>
     <div id="Clips">
