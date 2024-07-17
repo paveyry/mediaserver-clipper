@@ -81,7 +81,7 @@
             {{#each audio_clips}}
                 <div>
                     <label>{{this.clip_name}}
-                    <audio controls><source src="{{this.url}}" type="audio/mp3"/></audio>
+                    <audio preload="none" controls><source src="{{this.url}}" type="audio/mp3"/></audio>
                     <a href="{{this.url}}" download><button class="outline primary"><i class="fa-solid fa-download"></i></button></a>
                     <a href="{{this.url}}"><button class="outline primary"><i class="fa-solid fa-link"></i></button></a>
                     <a href="{{this.public_url}}"><button class="outline primary"><i class="fa-solid fa-share-nodes"></i></button></a>
@@ -108,7 +108,7 @@
                             </div>
                             <h2 class="video-title">{{this.0.clip_name}}</h2>
                         </div>
-                        <video controls>
+                        <video preload="none" controls>
                             <source src="{{this.0.url}}" type="video/mp4"/>
                         </video>
                     </div>
@@ -124,7 +124,7 @@
                             </div>
                             <h2 class="video-title">{{this.1.clip_name}}</h2>
                         </div>
-                        <video controls>
+                        <video preload="none" controls>
                             <source src="{{this.1.url}}" type="video/mp4"/>
                         </video>
                     </div>
