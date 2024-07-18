@@ -17,4 +17,4 @@ Cargo.lock
 output
 *.mp4
 
-public/favicon.png:Zone.Identifier
+favicon.png:Zone.Identifier

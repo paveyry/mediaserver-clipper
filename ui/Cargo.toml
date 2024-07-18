@@ -1,0 +1,10 @@
+[package]
+name = "ui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+common = { path = "../common" }
+yew = "0.21.0"
+wasm-logger = "0.2.0"
+log = "0.4.22"
