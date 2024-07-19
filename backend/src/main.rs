@@ -1,6 +1,6 @@
 mod app; // App config and state
 mod clipper; // Extracting clips from source video using ffmpeg
-mod clips; // Clip library management
+mod clip_library; // Clip library management
 mod ffprobe; // Data extraction from source video files using ffprobe
 mod models; // Forms for front-end-issued queries
 mod routes; // Rocket routes
@@ -20,17 +20,16 @@ fn app() -> _ {
         .attach(Template::fairing())
         .manage(app)
         .mount(
-            app::OUTPUT_ROUTE,
+            common::constants::OUTPUT_ROUTE,
             FileServer::new(output_dir, Options::NormalizeDirs),
-        )
-        .mount(
-            "/public",
-            FileServer::new("./public", Options::NormalizeDirs),
         )
         .mount(
             "/",
             routes![
                 routes::root,
+                routes::ui_files,
+                routes::app_config,
+                routes::clips,
                 routes::configure_clip,
                 routes::delete_clip,
                 routes::create_clip,
@@ -39,5 +38,9 @@ fn app() -> _ {
                 routes::refresh_index,
                 routes::clear_failures,
             ],
+        )
+        .mount(
+            "/static",
+            FileServer::new("./static", Options::NormalizeDirs),
         )
 }

@@ -6,7 +6,7 @@ use std::str::FromStr;
 use crate::clipper;
 use crate::search;
 
-const APP_NAME_VARNAME: &str = "APP_NAME";
+const APP_NAME_VARNAME: &str = "APP_NAME"; // TODO: display again
 const OUTPUT_PATH_VARNAME: &str = "OUTPUT_PATH";
 const PUBLIC_LINK_PREFIX_VARNAME: &str = "PUBLIC_LINK_PREFIX";
 const MAX_CLIP_DURATION_VARNAME: &str = "MAX_CLIP_DURATION";
@@ -19,7 +19,6 @@ const DEFAULT_VAR_NAME: &str = "Media Server Clipper";
 const DEFAULT_MAX_CLIP_DURATION: u64 = 600; // 10 minutes
 const DEFAULT_MAX_QUEUE_SIZE: usize = 4;
 
-pub(crate) const OUTPUT_ROUTE: &str = "/output";
 
 pub struct App {
     // components

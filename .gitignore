@@ -18,3 +18,5 @@ output
 *.mp4
 
 favicon.png:Zone.Identifier
+
+dist/
