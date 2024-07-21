@@ -2,26 +2,28 @@ use std::path::PathBuf;
 use std::result::Result as StdResult;
 
 use crate::app::{App, SEARCH_DIRS_VARNAME};
-use crate::clipper::{validate_start_end, Job};
 use crate::clip_library;
+use crate::clipper::{validate_start_end, Job};
 use crate::ffprobe::get_track_data;
 use crate::models;
 
 use anyhow::{Context, Result as AnyResult};
 use rocket::form::{Contextual, Form};
-use rocket::request::FlashMessage;
 use rocket::fs::NamedFile;
-use rocket::response::{Flash, Redirect};
+use rocket::request::FlashMessage;
 use rocket::response::status::{Forbidden, NotFound};
-use rocket::State;
+use rocket::response::{Flash, Redirect};
 use rocket::serde::json::Json;
+use rocket::State;
 use rocket::{get, post, uri};
 use rocket_dyn_templates::{context, Template};
 
 #[get("/<ui_file>")]
 pub async fn ui_files(ui_file: PathBuf) -> StdResult<NamedFile, NotFound<String>> {
     let path = PathBuf::from("../ui/dist").join(ui_file);
-    NamedFile::open(path).await.map_err(|e| NotFound(e.to_string()))
+    NamedFile::open(path)
+        .await
+        .map_err(|e| NotFound(e.to_string()))
 }
 
 #[get("/")]
@@ -30,7 +32,6 @@ pub async fn root() -> StdResult<NamedFile, NotFound<String>> {
         .await
         .map_err(|e| NotFound(e.to_string()))
 }
-
 
 #[get("/app_config")]
 pub async fn app_config(app: &State<App>) -> Json<common::Config> {
@@ -43,12 +44,13 @@ pub async fn app_config(app: &State<App>) -> Json<common::Config> {
 #[get("/clips")]
 pub async fn clips(app: &State<App>) -> StdResult<Json<common::ClipsLibrary>, Forbidden<String>> {
     let pending = app.clipper.jobs_in_progress();
-    let video = clip_library::video_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending).map_err(|e| Forbidden(e.to_string()))?;
-    let audio = clip_library::audio_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending).map_err(|e| Forbidden(e.to_string()))?;
-    Ok(Json(common::ClipsLibrary{
-        video,
-        audio,
-    }))
+    let video =
+        clip_library::video_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending)
+            .map_err(|e| Forbidden(e.to_string()))?;
+    let audio =
+        clip_library::audio_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending)
+            .map_err(|e| Forbidden(e.to_string()))?;
+    Ok(Json(common::ClipsLibrary { video, audio }))
 }
 
 // #[get("/")]

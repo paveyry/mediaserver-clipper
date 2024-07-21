@@ -1,9 +1,9 @@
-use yew::prelude::*;
-use gloo_net::http::Request;
 use futures::future::TryFutureExt;
+use gloo_net::http::Request;
+use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
-struct VideoClipsLibraryProp {
+struct ClipsLibraryProp {
     clips: Vec<common::ClipInfo>,
 }
 
@@ -17,53 +17,93 @@ pub fn clips_panel() -> Html {
             wasm_bindgen_futures::spawn_local(async move {
                 let config = Request::get("/clips")
                     .send()
-                    .and_then(|r| async move { 
-                        r.json::<common::ClipsLibrary>().await
-                    }).await.ok();
+                    .and_then(|r| async move { r.json::<common::ClipsLibrary>().await })
+                    .await
+                    .ok();
                 clips.set(config)
             })
         })
     }
     let Some(clips) = (*clips).clone() else {
-        return html!{};
+        return html! {};
     };
     let two_sections = !clips.audio.is_empty() && !clips.video.is_empty();
     html! {
-        <div id="clips">
-            if two_sections {
-                <h3>{"Audio clips"}</h3>
-            }
-            // <AudioClipsPanel clips={clips.audio}>
-            if two_sections {
-                <h3>{"Audio clips"}</h3>
-            }
-            <VideoClipsPanel clips={clips.video}/>
-        </div>
+        <>
+            <br/>
+            <div id="clips">
+                if two_sections {
+                    <h3>{"Audio clips"}</h3>
+                }
+                <AudioClipsPanel clips={clips.audio}/>
+                <br/>
+                if two_sections {
+                    <h3>{"Video clips"}</h3>
+                }
+                <VideoClipsPanel clips={clips.video}/>
+            </div>
+        </>
     }
 }
 
 #[function_component(VideoClipsPanel)]
-fn video_clips_panel(VideoClipsLibraryProp { clips }: &VideoClipsLibraryProp) -> Html {
-    clips.chunks(2).map(|pair| {
-        html! {
-            <>
-                <div class="grid">
-                    <Video clip_info={pair[0].clone()}/>
-                    if let Some(ci) = pair.get(1) {
-                        <Video clip_info={ci.clone()}/>
-                    } else {
-                        <div></div>
-                    }
+fn video_clips_panel(ClipsLibraryProp { clips }: &ClipsLibraryProp) -> Html {
+    clips
+        .chunks(2)
+        .map(|pair| {
+            html! {
+                <>
+                    <div class="grid">
+                        <Video clip_info={pair[0].clone()}/>
+                        if let Some(ci) = pair.get(1) {
+                            <Video clip_info={ci.clone()}/>
+                        } else {
+                            <div></div>
+                        }
+                    </div>
+                    <br />
+                </>
+            }
+        })
+        .collect()
+}
+
+#[function_component(AudioClipsPanel)]
+fn audio_clips_panel(ClipsLibraryProp { clips }: &ClipsLibraryProp) -> Html {
+    clips
+        .iter()
+        .map(|clip| {
+            html! {
+                <div>
+                    <Audio clip_info={clip.clone()}/>
                 </div>
-                <br />
-            </>
-        }
-    }).collect::<Html>()
+            }
+        })
+        .collect()
 }
 
 #[derive(Properties, PartialEq)]
 struct ClipProp {
     clip_info: common::ClipInfo,
+}
+
+#[function_component(Audio)]
+fn audio(ClipProp { clip_info }: &ClipProp) -> Html {
+    let url = &clip_info.url;
+    let file_name = &clip_info.file_name;
+    let clip_name = &clip_info.clip_name;
+    let pub_url = &clip_info.public_url;
+    html! {
+        <div>
+            <label>{clip_name.to_owned()}{" "}
+                <audio preload="none" controls=true><source src={url.to_owned()} type="audio/mp3"/></audio>
+                <a href={url.to_owned()} download={file_name.to_owned()}><button class="outline primary"><i class="fa-solid fa-download"></i></button></a>
+                <a href={url.to_owned()}><button class="outline primary"><i class="fa-solid fa-link"></i></button></a>
+                <a href={pub_url.to_owned()}><button class="outline primary"><i class="fa-solid fa-share-nodes"></i></button></a>
+                // <a href="/delete?file_name={{this.file_name}}"><button class="outline primary"><i class="fa-solid fa-trash"></i></button></a>
+            </label>
+        </div>
+    }
 }
 
 #[function_component(Video)]

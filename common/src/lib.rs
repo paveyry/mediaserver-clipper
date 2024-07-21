@@ -32,5 +32,5 @@ impl ClipInfo {
 #[derive(Default, Clone, Serialize, Deserialize, PartialEq, yew::Properties)]
 pub struct ClipsLibrary {
     pub video: Vec<ClipInfo>,
-    pub audio: Vec<ClipInfo>
+    pub audio: Vec<ClipInfo>,
 }

@@ -1,4 +1,4 @@
-use std::path::Path; 
+use std::path::Path;
 use std::process::Command;
 
 const UI_DIR: &str = "../ui";

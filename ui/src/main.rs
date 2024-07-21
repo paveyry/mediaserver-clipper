@@ -1,13 +1,12 @@
 mod components;
 
-use components::input::{FileInput, SearchInput};
 use components::clips::ClipsPanel;
+use components::input::{FileInput, SearchInput};
 
+use futures::future::TryFutureExt;
 use gloo_net::http::Request;
 use log;
 use yew::prelude::*;
-use futures::future::TryFutureExt;
-
 
 #[function_component(App)]
 fn app() -> Html {
@@ -19,9 +18,9 @@ fn app() -> Html {
             wasm_bindgen_futures::spawn_local(async move {
                 let config = Request::get("/app_config")
                     .send()
-                    .and_then(|r| async move { 
-                        r.json::<common::Config>().await
-                    }).await.ok();
+                    .and_then(|r| async move { r.json::<common::Config>().await })
+                    .await
+                    .ok();
                 app_config.set(config)
             })
         })

@@ -28,7 +28,7 @@ fn clips_in_directory_with_ext(
     p: &PathBuf,
     public_url_prefix: &str,
     pending: &HashSet<String>,
-    ext: &str
+    ext: &str,
 ) -> Result<Vec<ClipInfo>> {
     Ok(files_in_directory_with_ext(p, ext, pending)?
         .iter()

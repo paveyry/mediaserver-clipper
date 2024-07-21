@@ -19,7 +19,6 @@ const DEFAULT_VAR_NAME: &str = "Media Server Clipper";
 const DEFAULT_MAX_CLIP_DURATION: u64 = 600; // 10 minutes
 const DEFAULT_MAX_QUEUE_SIZE: usize = 4;
 
-
 pub struct App {
     // components
     pub clipper: clipper::Worker,
