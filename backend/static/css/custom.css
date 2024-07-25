@@ -4,3 +4,7 @@ video {
     object-fit: contain;
     background-color: black;
 }
+
+.apptitle:hover {
+    cursor: pointer;
+}

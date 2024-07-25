@@ -8,7 +8,6 @@ use crate::app::LOCK_ERROR;
 
 use anyhow::{Error, Result};
 
-
 #[derive(Debug, Clone)]
 pub struct VideoTime(u8, u8, u8);
 

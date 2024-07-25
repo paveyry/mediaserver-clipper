@@ -2,23 +2,23 @@ use std::path::PathBuf;
 use std::result::Result as StdResult;
 
 use crate::app::{App, SEARCH_DIRS_VARNAME};
-use crate::clips_library;
 use crate::clipper::{validate_start_end, Job};
+use crate::clips_library;
 use crate::ffprobe::get_track_data;
 use crate::models;
 
 use anyhow::{Context, Result as AnyResult};
+use itertools::Itertools;
 use rocket::form::{Contextual, Form};
 use rocket::fs::NamedFile;
-use rocket::request::FlashMessage;
 use rocket::http::Status;
-use rocket::response::status::{BadRequest, NotFound, Forbidden, Custom as CustomStatus};
+use rocket::request::FlashMessage;
+use rocket::response::status::{BadRequest, Custom as CustomStatus, Forbidden, NotFound};
 use rocket::response::{Flash, Redirect};
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket::{get, post, uri};
 use rocket_dyn_templates::{context, Template};
-use itertools::Itertools;
 
 #[get("/<ui_file>")]
 pub async fn ui_files(ui_file: PathBuf) -> StdResult<NamedFile, NotFound<String>> {
@@ -129,7 +129,8 @@ pub async fn search_file(
     };
 
     let Some(ref sr) = form.value else {
-        return Err(CustomStatus(Status::BadRequest, 
+        return Err(CustomStatus(
+            Status::BadRequest,
             form.context
                 .errors()
                 .map(|error| {
@@ -140,7 +141,8 @@ pub async fn search_file(
                     let description = error;
                     format!("'{name}' {description}")
                 })
-                .join("; ")));
+                .join("; "),
+        ));
     };
 
     let search_fields = sr
@@ -149,7 +151,10 @@ pub async fn search_file(
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>();
     if search_fields.is_empty() {
-        return Err(CustomStatus(Status::BadRequest, "search fields should not be left empty".to_string()));
+        return Err(CustomStatus(
+            Status::BadRequest,
+            "search fields should not be left empty".to_string(),
+        ));
     }
 
     let results = search_engine.search(search_fields.as_slice());

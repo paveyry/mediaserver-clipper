@@ -15,7 +15,6 @@ const SEARCH_EXTS_VARNAME: &str = "SEARCH_FILE_EXTS";
 pub const SEARCH_DIRS_VARNAME: &str = "SEARCH_DIRS";
 
 const DEFAULT_OUTPUT_PATH: &str = "output";
-const DEFAULT_VAR_NAME: &str = "Media Server Clipper";
 const DEFAULT_MAX_CLIP_DURATION: u64 = 600; // 10 minutes
 const DEFAULT_MAX_QUEUE_SIZE: usize = 4;
 
@@ -90,7 +89,8 @@ impl App {
                 Some(search::SearchEngine::new(source_dirs, allowed_exts))
             },
 
-            app_name: env::var(APP_NAME_VARNAME).unwrap_or_else(|_| DEFAULT_VAR_NAME.to_string()),
+            app_name: env::var(APP_NAME_VARNAME)
+                .unwrap_or_else(|_| common::constants::DEFAULT_APP_NAME.to_string()),
             out_path: out_path_buf,
             public_link_prefix: out_link_prefix,
             max_clip_duration,

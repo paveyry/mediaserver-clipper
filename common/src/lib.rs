@@ -2,12 +2,22 @@ use serde::{Deserialize, Serialize};
 
 pub mod constants {
     pub const OUTPUT_ROUTE: &str = "/output";
+    pub const DEFAULT_APP_NAME: &str = "Media Server Clipper";
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub app_name: String,
     pub search_enabled: bool,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            app_name: crate::constants::DEFAULT_APP_NAME.to_string(),
+            search_enabled: false,
+        }
+    }
 }
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, yew::Properties)]
@@ -34,4 +44,3 @@ pub struct ClipsLibrary {
     pub video: Vec<ClipInfo>,
     pub audio: Vec<ClipInfo>,
 }
-

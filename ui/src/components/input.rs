@@ -1,51 +1,60 @@
-use yew::prelude::*;
-use web_sys::wasm_bindgen::JsCast;
-use web_sys::HtmlInputElement;
+use leptos::*;
 
-fn single_text_form(state: UseStateHandle<Option<String>>, name: &str, placeholder: &str, button_text: &str, callback: Callback<Option<String>>) -> Html {
-    let on_text_changed = {
-        let state = state.clone();
-        Callback::from(move |event: Event| {
-            let target = event.target().and_then(|t| t.dyn_into::<HtmlInputElement>().ok().and_then(|t| Some(t.value())));
-            state.set(target);
-        })
+#[component]
+fn SingleTextForm(
+    name: &'static str,
+    placeholder: &'static str,
+    button_text: &'static str,
+    #[prop(into)] callback: Callback<String>,
+) -> impl IntoView {
+
+    let input_element: NodeRef<html::Input> = create_node_ref();
+    let on_submit = move |ev: leptos::ev::SubmitEvent| {
+        ev.prevent_default();
+        let Some(value) = input_element.get() else {
+            return;
+        };
+        callback.call(value.value());
     };
-
-    let on_submit = {
-        let state = state.clone();
-        Callback::from(move |event: SubmitEvent| {
-            callback.emit((*state).clone());
-            event.prevent_default();
-        })
-    };
-
-    html! {
-        <form onsubmit={on_submit}>
+    view! {
+        <form on:submit=on_submit> // on_submit defined below
             <fieldset role="group">
-                <input onchange={on_text_changed} type="text"
-                    name={name.to_string()}
-                    placeholder={placeholder.to_string()}
-                    aria-label={placeholder.to_string()}
+                <input type="text"
+                    name=name
+                    placeholder=placeholder
+                    arial-label=placeholder
                     required=true
+
+                    node_ref=input_element
                 />
-                <button>{button_text}</button>
+                <button type="submit">{button_text}</button>
             </fieldset>
         </form>
     }
 }
 
-#[function_component(FileInput)]
-pub fn file_input() -> Html {
-    let state = use_state(|| None);
-    single_text_form(state.clone(), "file_path", "Path to source file", "\u{00a0}\u{00a0}Clip\u{00a0}\u{00a0}\u{00a0}", Callback::from(|s: Option<String>| {
-        log::info!("final callback path: {}", s.unwrap());
-    }))
+
+
+#[component]
+pub fn ExactPathInput(#[prop(into)] callback: Callback<String>) -> impl IntoView {
+    view! {
+        <SingleTextForm
+            name="file_path"
+            placeholder="Path to source file"
+            button_text="\u{00a0}\u{00a0}Clip\u{00a0}\u{00a0}\u{00a0}"
+            callback=callback
+        />
+    }
 }
 
-#[function_component(SearchInput)]
-pub fn search_input() -> Html {
-    let state = use_state(|| None);
-    single_text_form(state.clone(), "search_string", "Search words", "Search", Callback::from(|s: Option<String>| {
-        log::info!("final callback: {}", s.unwrap());
-    }))
+#[component]
+pub fn SearchInput(#[prop(into)] callback: Callback<String>) -> impl IntoView {
+    view! {
+        <SingleTextForm
+            name="search_string"
+            placeholder="Search words"
+            button_text="Search"
+            callback=callback
+        />
+    }
 }
