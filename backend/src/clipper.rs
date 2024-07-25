@@ -4,9 +4,10 @@ use std::process::{Command, Stdio};
 use std::sync::{mpsc, Arc, RwLock};
 use std::thread;
 
+use crate::app::LOCK_ERROR;
+
 use anyhow::{Error, Result};
 
-const LOCK_ERROR: &str = "fatal error; lock holder has panicked";
 
 #[derive(Debug, Clone)]
 pub struct VideoTime(u8, u8, u8);

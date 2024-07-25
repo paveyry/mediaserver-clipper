@@ -1,5 +1,5 @@
 mod app; // App config and state
-mod clip_library; // Clip library management
+mod clips_library; // Clip library management
 mod clipper; // Extracting clips from source video using ffmpeg
 mod ffprobe; // Data extraction from source video files using ffprobe
 mod models; // Forms for front-end-issued queries

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::result::Result as StdResult;
 
 use crate::app::{App, SEARCH_DIRS_VARNAME};
-use crate::clip_library;
+use crate::clips_library;
 use crate::clipper::{validate_start_end, Job};
 use crate::ffprobe::get_track_data;
 use crate::models;
@@ -11,12 +11,14 @@ use anyhow::{Context, Result as AnyResult};
 use rocket::form::{Contextual, Form};
 use rocket::fs::NamedFile;
 use rocket::request::FlashMessage;
-use rocket::response::status::{Forbidden, NotFound};
+use rocket::http::Status;
+use rocket::response::status::{BadRequest, NotFound, Forbidden, Custom as CustomStatus};
 use rocket::response::{Flash, Redirect};
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket::{get, post, uri};
 use rocket_dyn_templates::{context, Template};
+use itertools::Itertools;
 
 #[get("/<ui_file>")]
 pub async fn ui_files(ui_file: PathBuf) -> StdResult<NamedFile, NotFound<String>> {
@@ -45,10 +47,10 @@ pub async fn app_config(app: &State<App>) -> Json<common::Config> {
 pub async fn clips(app: &State<App>) -> StdResult<Json<common::ClipsLibrary>, Forbidden<String>> {
     let pending = app.clipper.jobs_in_progress();
     let video =
-        clip_library::video_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending)
+        clips_library::video_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending)
             .map_err(|e| Forbidden(e.to_string()))?;
     let audio =
-        clip_library::audio_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending)
+        clips_library::audio_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending)
             .map_err(|e| Forbidden(e.to_string()))?;
     Ok(Json(common::ClipsLibrary { video, audio }))
 }
@@ -119,16 +121,15 @@ pub async fn select_source(
 pub async fn search_file(
     app: &State<App>,
     form: Form<Contextual<'_, models::SearchRequest>>,
-) -> Template {
+) -> StdResult<Json<Vec<String>>, CustomStatus<String>> {
     let Some(search_engine) = &app.search else {
-        return render_error(vec![format!(
-            "Search is disabled because no source directory was specified in the {} env variable",
-            SEARCH_DIRS_VARNAME
-        )]);
+        return Err(CustomStatus(Status::Forbidden, format!(
+            "Search is disabled because no source directory was specified in the {SEARCH_DIRS_VARNAME} env variable",
+        )));
     };
 
     let Some(ref sr) = form.value else {
-        return render_error(
+        return Err(CustomStatus(Status::BadRequest, 
             form.context
                 .errors()
                 .map(|error| {
@@ -139,8 +140,7 @@ pub async fn search_file(
                     let description = error;
                     format!("'{name}' {description}")
                 })
-                .collect::<Vec<_>>(),
-        );
+                .join("; ")));
     };
 
     let search_fields = sr
@@ -149,14 +149,11 @@ pub async fn search_file(
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>();
     if search_fields.is_empty() {
-        return render_error(vec!["search fields should not be left empty".to_string()]);
+        return Err(CustomStatus(Status::BadRequest, "search fields should not be left empty".to_string()));
     }
 
     let results = search_engine.search(search_fields.as_slice());
-    Template::render(
-        "search_result",
-        context! { app_name: &app.app_name, results},
-    )
+    Ok(Json(results))
 }
 
 #[get("/refresh_index")]
@@ -221,7 +218,7 @@ pub async fn create_clip(
 
 #[get("/delete?<file_name>")]
 pub async fn delete_clip(file_name: String, app: &State<App>) -> Template {
-    match clip_library::delete_file(&app.out_path, &file_name) {
+    match clips_library::delete_file(&app.out_path, &file_name) {
         Ok(()) => render_message(format!("Clip {file_name} was successfully removed")),
         Err(e) => render_error(vec![format!("failed to remove file: {e}")]),
     }
