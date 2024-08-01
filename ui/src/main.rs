@@ -2,59 +2,18 @@ mod components;
 
 use components::clips::ClipsPanel;
 use components::input::{ExactPathInput, SearchInput};
-// use components::input::{FileInput, SearchInput};
-
-use std::marker::PhantomData;
-use std::thread::spawn;
+use components::search::SearchResults;
 
 use futures::future::TryFutureExt;
 use gloo_net::http::Request;
 use leptos::*;
 use log;
-// use yew::prelude::*;
-
-// #[function_component(App)]
-// fn app() -> Html {
-//     let app_config = use_state(|| None);
-//     {
-//         let app_config = app_config.clone();
-//         use_effect_with((), move |_| {
-//             let app_config = app_config.clone();
-//             wasm_bindgen_futures::spawn_local(async move {
-//                 let config = Request::get("/app_config")
-//                     .send()
-//                     .and_then(|r| async move { r.json::<common::Config>().await })
-//                     .await
-//                     .ok();
-//                 app_config.set(config)
-//             })
-//         })
-//     }
-
-//     log::info!("FOOBAR:{:?}", (*app_config).clone());
-
-//     html! {
-//         <main class="container">
-//             <a href="/"><h1>{ (*app_config).clone().map_or_else(String::default, |ac| ac.app_name) }</h1></a>
-
-//             <FileInput />
-//             <SearchInput />
-//             <ClipsPanel />
-//         </main>
-//     }
-// }
 
 #[derive(Debug, Clone)]
 enum AppState {
     ExactPath(String),
     Search(String),
     Home,
-}
-
-impl std::fmt::Display for AppState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{self:?}"))
-    }
 }
 
 impl Default for AppState {
@@ -76,16 +35,13 @@ fn ProgressBar(#[prop(into)] progress: Signal<i32>, //impl Fn() -> i32 + 'static
 }
 
 async fn get_app_config(signal: WriteSignal<common::Config>) {
-    log::info!("getting");
     let config = Request::get("/app_config")
         .send()
         .and_then(|r| async move { r.json::<common::Config>().await })
         .await
         .ok();
-    log::info!("got");
     if let Some(config) = config {
-        log::info!("data: {:?}", &config);
-        // signal.set(config);
+        signal.set(config);
     }
     // TODO: Handle error
 }
@@ -103,13 +59,22 @@ fn App() -> impl IntoView {
     view! {
         <main class="container">
             <h1 class="apptitle" on:click=move |_| app_state_setter.set(AppState::Home)>{move || app_config_getter.get().app_name}</h1>
-            <Show when=move || !matches!(app_state_getter.get(), AppState::Home)>
-                <p> "PAGE NOT IMPLEMENTED: " {move || app_state_getter.get().to_string()}</p>
-            </Show>
-            <Show when=move || matches!(app_state_getter.get(), AppState::Home)>
-                <ExactPathInput callback=move |s| app_state_setter.set(AppState::ExactPath(s)) />
-                <SearchInput callback=move |s| app_state_setter.set(AppState::Search(s)) />
-            </Show>
+            {move ||match app_state_getter.get() {
+                AppState::ExactPath(path) => view!{<div><p> "PATH NOT IMPLEMENTED: " {path}</p></div>},
+                AppState::Search(search_string) => view!{
+                    <div>
+                        <SearchInput callback=move |s| app_state_setter.set(AppState::Search(s)) />
+                        <SearchResults app_state_setter=app_state_setter search_string=search_string />
+                    </div>
+                },
+                AppState::Home => view!{
+                    <div>
+                        <ExactPathInput callback=move |s| app_state_setter.set(AppState::ExactPath(s)) />
+                        <Show when=move || app_config_getter.get().search_enabled><SearchInput callback=move |s| app_state_setter.set(AppState::Search(s)) /></Show>
+                        <ClipsPanel />
+                    </div>
+                },
+            }}
         </main>
     }
 }

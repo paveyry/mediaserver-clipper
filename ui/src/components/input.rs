@@ -7,7 +7,6 @@ fn SingleTextForm(
     button_text: &'static str,
     #[prop(into)] callback: Callback<String>,
 ) -> impl IntoView {
-
     let input_element: NodeRef<html::Input> = create_node_ref();
     let on_submit = move |ev: leptos::ev::SubmitEvent| {
         ev.prevent_default();
@@ -32,8 +31,6 @@ fn SingleTextForm(
         </form>
     }
 }
-
-
 
 #[component]
 pub fn ExactPathInput(#[prop(into)] callback: Callback<String>) -> impl IntoView {

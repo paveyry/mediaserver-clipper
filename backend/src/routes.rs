@@ -117,10 +117,11 @@ pub async fn select_source(
     Ok(message)
 }
 
-#[post("/search", data = "<form>")]
+#[post("/search", data = "<search_request>")]
 pub async fn search_file(
     app: &State<App>,
-    form: Form<Contextual<'_, models::SearchRequest>>,
+    // form: Form<Contextual<'_, models::SearchRequest>>,
+    search_request: Json<common::SearchRequest>,
 ) -> StdResult<Json<Vec<String>>, CustomStatus<String>> {
     let Some(search_engine) = &app.search else {
         return Err(CustomStatus(Status::Forbidden, format!(
@@ -128,24 +129,26 @@ pub async fn search_file(
         )));
     };
 
-    let Some(ref sr) = form.value else {
-        return Err(CustomStatus(
-            Status::BadRequest,
-            form.context
-                .errors()
-                .map(|error| {
-                    let name = error
-                        .name
-                        .as_ref()
-                        .map_or_else(String::new, ToString::to_string);
-                    let description = error;
-                    format!("'{name}' {description}")
-                })
-                .join("; "),
-        ));
-    };
+    // let Some(ref sr) = form.value else {
+    //     return Err(CustomStatus(
+    //         Status::BadRequest,
+    //         form.context
+    //             .errors()
+    //             .map(|error| {
+    //                 let name = error
+    //                     .name
+    //                     .as_ref()
+    //                     .map_or_else(String::new, ToString::to_string);
+    //                 let description = error;
+    //                 format!("'{name}' {description}")
+    //             })
+    //             .join("; "),
+    //     ));
+    // };
+    // let sr = form;
+    println!("REQUEST2 {}", &search_request.search_string);
 
-    let search_fields = sr
+    let search_fields = search_request
         .search_string
         .split_whitespace()
         .filter(|s| !s.is_empty())
@@ -158,6 +161,7 @@ pub async fn search_file(
     }
 
     let results = search_engine.search(search_fields.as_slice());
+    println!("RESULT {:?}", results);
     Ok(Json(results))
 }
 

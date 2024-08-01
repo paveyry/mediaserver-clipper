@@ -1,15 +1,10 @@
 use rocket::FromForm;
+use serde::Deserialize;
 
 #[derive(FromForm, Debug)]
 pub struct NewClipRequest {
     #[field(validate=len(1..))]
     pub(crate) file_path: String,
-}
-
-#[derive(FromForm, Debug)]
-pub struct SearchRequest {
-    #[field(validate=len(1..))]
-    pub(crate) search_string: String,
 }
 
 #[derive(FromForm, Debug)]

@@ -20,7 +20,7 @@ impl Default for Config {
     }
 }
 
-#[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, yew::Properties)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ClipInfo {
     pub clip_name: String,
     pub url: String,
@@ -39,8 +39,14 @@ impl ClipInfo {
     }
 }
 
-#[derive(Default, Clone, Serialize, Deserialize, PartialEq, yew::Properties)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ClipsLibrary {
     pub video: Vec<ClipInfo>,
     pub audio: Vec<ClipInfo>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct SearchRequest {
+    // #[field(validate=len(1..))]
+    pub search_string: String,
 }

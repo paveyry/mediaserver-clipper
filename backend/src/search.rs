@@ -53,9 +53,9 @@ impl SearchEngine {
         let source_settings = Arc::clone(&self.source_settings);
         thread::spawn(move || {
             let new_index_map = create_index_map(source_settings);
+            println!("INDEX: {:?}", &new_index_map);
             *index_map.write().unwrap() = new_index_map;
             *refresh_in_progress.write().unwrap() = false;
-            log::info!("search: file indexing done");
         });
         Ok(())
     }

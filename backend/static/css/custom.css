@@ -8,3 +8,9 @@ video {
 .apptitle:hover {
     cursor: pointer;
 }
+
+.search-result {
+    text-align: left;
+    width: 100%;
+    margin-bottom: 3px;
+}
