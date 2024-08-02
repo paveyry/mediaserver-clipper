@@ -75,3 +75,8 @@ pub struct ConfigureClipRequest {
     pub end_hour: String,
     pub audio_only: bool,
 }
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct DeleteClipRequest {
+    pub clip_name: String,
+}

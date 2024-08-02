@@ -27,14 +27,17 @@ fn app() -> _ {
             routes![
                 routes::root,
                 routes::ui_files,
-                routes::app_config,
-                routes::clips,
-                routes::delete_clip,
+                routes::get_app_config,
+                routes::get_clips,
+                routes::get_ffprobe_tracks,
                 routes::create_clip,
-                routes::select_source,
-                routes::search_file,
+                routes::delete_clip,
+                routes::search_files,
                 routes::refresh_index,
-                routes::clear_failures,
+                routes::index_refresh_status,
+                routes::get_job_failures,
+                routes::get_pending_jobs,
+                routes::clear_job_failures,
             ],
         )
         .mount(

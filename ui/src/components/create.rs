@@ -1,5 +1,5 @@
 use crate::resp_to_res;
-use crate::AppState;
+use crate::{AppState, ErrorManager};
 use common::{ConfigureClipRequest, FFProbeResult};
 
 use futures::future::TryFutureExt;
@@ -8,7 +8,8 @@ use leptos::*;
 
 #[component]
 pub fn ClipCreationForm(
-    app_state_setter: WriteSignal<AppState>,
+    #[prop(into)] app_state_setter: Callback<AppState>,
+    errors_setter: WriteSignal<ErrorManager>,
     file_path: String,
 ) -> impl IntoView {
     let (tracks_info_getter, tracks_info_setter) = create_signal(None);
@@ -17,7 +18,7 @@ pub fn ClipCreationForm(
         spawn_local(async move {
             let req = common::FFProbeRequest { file_path };
             let tracks_info = resp_to_res(
-                Request::post("/ffprobe")
+                Request::post("/get_ffprobe_tracks")
                     .header("Content-Type", "application/json")
                     .json(&req)
                     .unwrap()
@@ -27,7 +28,10 @@ pub fn ClipCreationForm(
             .await;
             match tracks_info {
                 Ok(tracks_info) => tracks_info_setter.set(Some(tracks_info)),
-                Err(e) => app_state_setter.set(AppState::home().err(e.to_string())),
+                Err(e) => {
+                    app_state_setter.call(AppState::Home);
+                    errors_setter.update(|s| s.add_err(e.to_string()));
+                }
             }
         });
     }
@@ -73,8 +77,8 @@ pub fn ClipCreationForm(
                 )
                 .await;
                 match resp {
-                    Ok(_) => app_state_setter.set(AppState::home()),
-                    Err(e) => app_state_setter.update(|s| s.set_err(e.to_string())),
+                    Ok(_) => app_state_setter.call(AppState::Home),
+                    Err(e) => errors_setter.update(|s| s.add_err(e.to_string())),
                 }
             });
         }

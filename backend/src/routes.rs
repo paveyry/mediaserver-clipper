@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::result::Result as StdResult;
 
@@ -7,17 +8,12 @@ use crate::clips_library;
 use crate::ffprobe::get_track_data;
 
 use anyhow::{Context, Result as AnyResult};
-use itertools::Itertools;
-use rocket::form::{Contextual, Form};
 use rocket::fs::NamedFile;
 use rocket::http::Status;
-use rocket::request::FlashMessage;
 use rocket::response::status::{BadRequest, Custom as CustomStatus, Forbidden, NotFound};
-use rocket::response::{Flash, Redirect};
 use rocket::serde::json::Json;
 use rocket::State;
-use rocket::{get, post, uri};
-use rocket_dyn_templates::{context, Template};
+use rocket::{get, post};
 
 #[get("/<ui_file>")]
 pub async fn ui_files(ui_file: PathBuf) -> StdResult<NamedFile, NotFound<String>> {
@@ -34,16 +30,18 @@ pub async fn root() -> StdResult<NamedFile, NotFound<String>> {
         .map_err(|e| NotFound(e.to_string()))
 }
 
-#[get("/app_config")]
-pub async fn app_config(app: &State<App>) -> Json<common::Config> {
+#[get("/get_app_config")]
+pub async fn get_app_config(app: &State<App>) -> Json<common::Config> {
     Json(common::Config {
         app_name: app.app_name.to_string(),
         search_enabled: app.search.is_some(),
     })
 }
 
-#[get("/clips")]
-pub async fn clips(app: &State<App>) -> StdResult<Json<common::ClipsLibrary>, Forbidden<String>> {
+#[get("/get_clips")]
+pub async fn get_clips(
+    app: &State<App>,
+) -> StdResult<Json<common::ClipsLibrary>, Forbidden<String>> {
     let pending = app.clipper.jobs_in_progress();
     let video =
         clips_library::video_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending)
@@ -54,59 +52,13 @@ pub async fn clips(app: &State<App>) -> StdResult<Json<common::ClipsLibrary>, Fo
     Ok(Json(common::ClipsLibrary { video, audio }))
 }
 
-// #[get("/")]
-// pub async fn root(app: &State<App>) -> Template {
-//     let (search_enabled, index_refreshing) = app
-//         .search
-//         .as_ref()
-//         .map_or((false, false), |index| (true, index.is_refreshing()));
-
-//     let pending = app.clipper.jobs_in_progress();
-//     let failures = app.clipper.failures();
-
-//     let video_clips =
-//         match clips::video_pairs_in_directory(&app.out_path, &app.public_link_prefix, &pending) {
-//             Ok(clips) => clips,
-//             Err(e) => {
-//                 return render_error(vec![format!(
-//                     "Failed to list video clips from output directory: {}",
-//                     e
-//                 )])
-//             }
-//         };
-//     let audio_clips =
-//         match clips::audio_clips_in_directory(&app.out_path, &app.public_link_prefix, &pending) {
-//             Ok(clips) => clips,
-//             Err(e) => {
-//                 return render_error(vec![format!(
-//                     "Failed to list audio clips from output directory: {}",
-//                     e
-//                 )])
-//             }
-//         };
-
-//     Template::render(
-//         "root",
-//         context! {
-//             app_name: &app.app_name,
-//             video_clips,
-//             audio_clips,
-//             failures,
-//             pending_jobs: pending,
-//             index_refreshing,
-//             search_enabled,
-//         },
-//     )
-// }
-
-#[post("/ffprobe", data = "<ffprobe_req>")]
-pub async fn select_source(
+#[post("/get_ffprobe_tracks", data = "<ffprobe_req>")]
+pub async fn get_ffprobe_tracks(
     ffprobe_req: Json<common::FFProbeRequest>,
-) -> StdResult<Json<common::FFProbeResult>, CustomStatus<String>> {
+) -> StdResult<Json<common::FFProbeResult>, BadRequest<String>> {
     let source_file_path = ffprobe_req.file_path.trim().to_string();
     if source_file_path.is_empty() {
-        return Err(CustomStatus(
-            Status::BadRequest,
+        return Err(BadRequest(
             "source file path should not be empty".to_string(),
         ));
     }
@@ -115,15 +67,32 @@ pub async fn select_source(
             audio_tracks: at,
             sub_tracks: st,
         })),
-        Err(e) => Err(CustomStatus(
-            Status::InternalServerError,
-            format!("failed to extract source file tracks info: {}", e),
-        )),
+        Err(e) => Err(BadRequest(format!(
+            "failed to extract source file tracks info: {}",
+            e
+        ))),
     }
 }
 
-#[post("/search", data = "<search_request>")]
-pub async fn search_file(
+#[post("/create_clip", data = "<form>")]
+pub async fn create_clip(
+    app: &State<App>,
+    form: Json<common::ConfigureClipRequest>,
+) -> StdResult<(), BadRequest<String>> {
+    setup_job(app, &form).map_err(|e| BadRequest(e.to_string()))
+}
+
+#[post("/delete_clip", data = "<clip>")]
+pub async fn delete_clip(
+    app: &State<App>,
+    clip: Json<common::DeleteClipRequest>,
+) -> StdResult<(), BadRequest<String>> {
+    clips_library::delete_file(&app.out_path, &clip.clip_name)
+        .map_err(|e| BadRequest(format!("failed to remove file: {e}")))
+}
+
+#[post("/search_files", data = "<search_request>")]
+pub async fn search_files(
     app: &State<App>,
     search_request: Json<common::SearchRequest>,
 ) -> StdResult<Json<Vec<String>>, CustomStatus<String>> {
@@ -150,40 +119,46 @@ pub async fn search_file(
 }
 
 #[get("/refresh_index")]
-pub async fn refresh_index(app: &State<App>) -> Template {
+pub async fn refresh_index(app: &State<App>) -> StdResult<(), CustomStatus<String>> {
     let Some(search_engine) = &app.search else {
-        return render_error(vec![format!(
+        return Err(CustomStatus(
+            Status::Forbidden,
+            format!(
             "Search is disabled because no source directory was specified in the {} env variable",
             SEARCH_DIRS_VARNAME
-        )]);
+        ),
+        ));
     };
     if let Err(e) = search_engine.refresh_index() {
-        render_error(vec![e.to_string()])
-    } else {
-        render_message("file index is being refreshed. This can take some time".to_string())
+        return Err(CustomStatus(Status::InternalServerError, e.to_string()));
     }
+    Ok(())
 }
 
-#[post("/create_clip", data = "<form>")]
-pub async fn create_clip(
-    app: &State<App>,
-    form: Json<common::ConfigureClipRequest>,
-) -> StdResult<(), BadRequest<String>> {
-    setup_job(app, &form).map_err(|e| BadRequest(e.to_string()))
+#[get("/is_index_refreshing")]
+pub async fn index_refresh_status(app: &State<App>) -> Json<bool> {
+    Json(
+        app.search
+            .as_ref()
+            .map(|s| s.is_refreshing())
+            .unwrap_or_default(),
+    )
 }
 
-#[get("/delete?<file_name>")]
-pub async fn delete_clip(file_name: String, app: &State<App>) -> Template {
-    match clips_library::delete_file(&app.out_path, &file_name) {
-        Ok(()) => render_message(format!("Clip {file_name} was successfully removed")),
-        Err(e) => render_error(vec![format!("failed to remove file: {e}")]),
-    }
+#[get("/get_job_failures")]
+pub async fn get_job_failures(app: &State<App>) -> Json<Vec<String>> {
+    Json(app.clipper.failures())
 }
 
-#[get("/clear_failures")]
-pub async fn clear_failures(app: &State<App>) -> Template {
+#[get("/clear_job_failures")]
+pub async fn clear_job_failures(app: &State<App>) -> Json<()> {
     app.clipper.clear_failures();
-    render_message("The list of failures was successfully cleared".to_string())
+    Json(())
+}
+
+#[get("/get_pending_jobs")]
+pub async fn get_pending_jobs(app: &State<App>) -> Json<HashSet<String>> {
+    Json(app.clipper.jobs_in_progress())
 }
 
 fn setup_job(app: &State<App>, ccr: &common::ConfigureClipRequest) -> AnyResult<()> {
@@ -220,12 +195,4 @@ fn setup_job(app: &State<App>, ccr: &common::ConfigureClipRequest) -> AnyResult<
         ccr.audio_only,
     ))?;
     Ok(())
-}
-
-fn render_error(errors: Vec<String>) -> Template {
-    Template::render("message", context! {errors})
-}
-
-fn render_message(message: String) -> Template {
-    Template::render("message", context! {message})
 }

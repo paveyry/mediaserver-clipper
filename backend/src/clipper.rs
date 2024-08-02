@@ -248,7 +248,13 @@ fn run_job(job: &Job) -> Result<()> {
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
 
-    cmd.output()?;
+    let output = cmd.output()?;
+    if !output.status.success() {
+        return Err(Error::msg(format!(
+            "job {} failed: ffmpeg returned status {}",
+            &job.clip_name, output.status
+        )));
+    }
 
     log::info!("file transcoding succeded: {}", &job.clip_name);
     Ok(())
