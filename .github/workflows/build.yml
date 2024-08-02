@@ -2,9 +2,6 @@ name: Build
 
 on: push
 
-defaults:
- run:
-  working-directory: ./backend
 
 jobs:
   build:
@@ -14,6 +11,11 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
+      - name: Install deps
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo install trunk
+      - name: Build
+        working-directory: ./backend
+        run: |
+          cargo build --release
