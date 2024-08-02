@@ -1,3 +1,4 @@
+use crate::resp_to_res;
 use crate::AppState;
 
 use futures::future::TryFutureExt;
@@ -14,21 +15,20 @@ pub fn SearchResults(
         let req = common::SearchRequest {
             search_string: search_string,
         };
-        let clips = Request::post("/search")
-            // .header("Content-Type", "multipart/form-data")
-            .header("Content-Type", "application/json")
-            .json(&req)
-            .unwrap()
-            .send()
-            .and_then(|r| async move { r.json::<Vec<String>>().await })
-            .await
-            .ok();
-        log::info!("GOT  RESULTS: {clips:?}");
+        let clips = resp_to_res(
+            Request::post("/search")
+                .header("Content-Type", "application/json")
+                .json(&req)
+                .unwrap()
+                .send(),
+        )
+        .and_then(|r| async move { Ok(r.json::<Vec<String>>().await?) })
+        .await
+        .ok();
         results_setter.set(clips)
     });
 
     view! {
-        <h2>Search Results</h2>
         {move || if let Some(results) = results_getter.get().to_owned() {
             results.into_iter().map(
                 move |file| {
@@ -37,7 +37,7 @@ pub fn SearchResults(
                     <form>
                         <button
                             class="secondary search-result"
-                            on:click=move |_| app_state_setter.set(AppState::ExactPath(target_file.clone()))>
+                            on:click=move |_| app_state_setter.set(AppState::exact_path(target_file.clone()))>
                             {file.to_owned()}
                         </button>
                     </form>

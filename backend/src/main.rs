@@ -2,7 +2,6 @@ mod app; // App config and state
 mod clipper; // Extracting clips from source video using ffmpeg
 mod clips_library; // Clip library management
 mod ffprobe; // Data extraction from source video files using ffprobe
-mod models; // Forms for front-end-issued queries
 mod routes; // Rocket routes
 mod search; // Source file search engine
 
@@ -30,7 +29,6 @@ fn app() -> _ {
                 routes::ui_files,
                 routes::app_config,
                 routes::clips,
-                routes::configure_clip,
                 routes::delete_clip,
                 routes::create_clip,
                 routes::select_source,

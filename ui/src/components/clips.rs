@@ -1,3 +1,5 @@
+use crate::resp_to_res;
+
 use futures::future::TryFutureExt;
 use gloo_net::http::Request;
 use leptos::*;
@@ -6,9 +8,8 @@ use leptos::*;
 pub fn ClipsPanel() -> impl IntoView {
     let (clips_getter, clips_setter) = create_signal(None);
     spawn_local(async move {
-        let clips = Request::get("/clips")
-            .send()
-            .and_then(|r| async move { r.json::<common::ClipsLibrary>().await })
+        let clips = resp_to_res(Request::get("/clips").send())
+            .and_then(|r| async move { Ok(r.json::<common::ClipsLibrary>().await?) })
             .await
             .ok();
         clips_setter.set(clips)

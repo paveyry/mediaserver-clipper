@@ -14,3 +14,7 @@ video {
     width: 100%;
     margin-bottom: 3px;
 }
+
+.error-message {
+    background: #6b0101;
+}

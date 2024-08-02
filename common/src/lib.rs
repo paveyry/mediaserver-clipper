@@ -47,6 +47,31 @@ pub struct ClipsLibrary {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct SearchRequest {
-    // #[field(validate=len(1..))]
     pub search_string: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FFProbeRequest {
+    pub file_path: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+pub struct FFProbeResult {
+    pub audio_tracks: Vec<String>,
+    pub sub_tracks: Vec<String>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ConfigureClipRequest {
+    pub source_file: String,
+    pub clip_name: String,
+    pub audio_track: String,
+    pub subtitle_track: String,
+    pub start_sec: String,
+    pub start_min: String,
+    pub start_hour: String,
+    pub end_sec: String,
+    pub end_min: String,
+    pub end_hour: String,
+    pub audio_only: bool,
 }

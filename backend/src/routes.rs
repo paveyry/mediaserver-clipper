@@ -5,7 +5,6 @@ use crate::app::{App, SEARCH_DIRS_VARNAME};
 use crate::clipper::{validate_start_end, Job};
 use crate::clips_library;
 use crate::ffprobe::get_track_data;
-use crate::models;
 
 use anyhow::{Context, Result as AnyResult};
 use itertools::Itertools;
@@ -100,27 +99,32 @@ pub async fn clips(app: &State<App>) -> StdResult<Json<common::ClipsLibrary>, Fo
 //     )
 // }
 
-#[post("/", data = "<form>")]
+#[post("/ffprobe", data = "<ffprobe_req>")]
 pub async fn select_source(
-    form: Form<Contextual<'_, models::NewClipRequest>>,
-) -> Result<Flash<Redirect>, Template> {
-    let Some(ref ncr) = form.value else {
-        return Err(render_error(vec![
-            "Path to source file should not be empty".to_string(),
-        ]));
-    };
-
-    let message = Flash::success(
-        Redirect::to(uri!(configure_clip)),
-        ncr.file_path.trim().to_string(),
-    );
-    Ok(message)
+    ffprobe_req: Json<common::FFProbeRequest>,
+) -> StdResult<Json<common::FFProbeResult>, CustomStatus<String>> {
+    let source_file_path = ffprobe_req.file_path.trim().to_string();
+    if source_file_path.is_empty() {
+        return Err(CustomStatus(
+            Status::BadRequest,
+            "source file path should not be empty".to_string(),
+        ));
+    }
+    match get_track_data(source_file_path.trim()) {
+        Ok((at, st)) => Ok(Json(common::FFProbeResult {
+            audio_tracks: at,
+            sub_tracks: st,
+        })),
+        Err(e) => Err(CustomStatus(
+            Status::InternalServerError,
+            format!("failed to extract source file tracks info: {}", e),
+        )),
+    }
 }
 
 #[post("/search", data = "<search_request>")]
 pub async fn search_file(
     app: &State<App>,
-    // form: Form<Contextual<'_, models::SearchRequest>>,
     search_request: Json<common::SearchRequest>,
 ) -> StdResult<Json<Vec<String>>, CustomStatus<String>> {
     let Some(search_engine) = &app.search else {
@@ -128,25 +132,6 @@ pub async fn search_file(
             "Search is disabled because no source directory was specified in the {SEARCH_DIRS_VARNAME} env variable",
         )));
     };
-
-    // let Some(ref sr) = form.value else {
-    //     return Err(CustomStatus(
-    //         Status::BadRequest,
-    //         form.context
-    //             .errors()
-    //             .map(|error| {
-    //                 let name = error
-    //                     .name
-    //                     .as_ref()
-    //                     .map_or_else(String::new, ToString::to_string);
-    //                 let description = error;
-    //                 format!("'{name}' {description}")
-    //             })
-    //             .join("; "),
-    //     ));
-    // };
-    // let sr = form;
-    println!("REQUEST2 {}", &search_request.search_string);
 
     let search_fields = search_request
         .search_string
@@ -161,7 +146,6 @@ pub async fn search_file(
     }
 
     let results = search_engine.search(search_fields.as_slice());
-    println!("RESULT {:?}", results);
     Ok(Json(results))
 }
 
@@ -180,49 +164,12 @@ pub async fn refresh_index(app: &State<App>) -> Template {
     }
 }
 
-#[get("/configure_clip")]
-pub async fn configure_clip(app: &State<App>, flash: Option<FlashMessage<'_>>) -> Template {
-    let source_file = flash.map_or_else(String::default, |msg| msg.message().to_string());
-    if source_file.is_empty() {
-        return render_error(vec!["Path to source file should not be empty".to_string()]);
-    }
-    match get_track_data(source_file.trim()) {
-        Ok((at, st)) => Template::render(
-            "configure",
-            context! {app_name: &app.app_name, source_file, audio_tracks: at, subtitle_tracks: st},
-        ),
-        Err(e) => render_error(vec![format!("failed to get track data from file: {}", e)]),
-    }
-}
-
-#[post("/configure_clip", data = "<form>")]
+#[post("/create_clip", data = "<form>")]
 pub async fn create_clip(
     app: &State<App>,
-    form: Form<Contextual<'_, models::ConfigureClipRequest>>,
-) -> Template {
-    let Some(ref ccr) = form.value else {
-        return render_error(
-            form.context
-                .errors()
-                .map(|error| {
-                    let name = error
-                        .name
-                        .as_ref()
-                        .map_or_else(String::new, ToString::to_string);
-                    let description = error;
-                    format!("'{name}' {description}")
-                })
-                .collect::<Vec<_>>(),
-        );
-    };
-
-    match setup_job(app, ccr) {
-        Ok(()) => render_message(format!(
-            "clip {} was successfully added to processing queue",
-            ccr.clip_name
-        )),
-        Err(e) => render_error(vec![e.to_string()]),
-    }
+    form: Json<common::ConfigureClipRequest>,
+) -> StdResult<(), BadRequest<String>> {
+    setup_job(app, &form).map_err(|e| BadRequest(e.to_string()))
 }
 
 #[get("/delete?<file_name>")]
@@ -239,7 +186,7 @@ pub async fn clear_failures(app: &State<App>) -> Template {
     render_message("The list of failures was successfully cleared".to_string())
 }
 
-fn setup_job(app: &State<App>, ccr: &models::ConfigureClipRequest) -> AnyResult<()> {
+fn setup_job(app: &State<App>, ccr: &common::ConfigureClipRequest) -> AnyResult<()> {
     let (start_time, end_time) = validate_start_end(
         app.max_clip_duration,
         &ccr.start_hour,
