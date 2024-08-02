@@ -9,14 +9,12 @@ use crate::app::App;
 
 use rocket::fs::{FileServer, Options};
 use rocket::{launch, routes};
-use rocket_dyn_templates::Template;
 
 #[launch]
 fn app() -> _ {
     let app = App::init();
     let output_dir = app.out_path.clone();
     rocket::build()
-        .attach(Template::fairing())
         .manage(app)
         .mount(
             common::constants::OUTPUT_ROUTE,

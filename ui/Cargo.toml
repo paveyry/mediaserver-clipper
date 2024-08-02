@@ -5,15 +5,9 @@ edition = "2021"
 
 [dependencies]
 common = { path = "../common" }
-# yew = { version = "0.21.0", features = ["csr"] }
 wasm-logger = "0.2.0"
 log = "0.4.22"
 gloo-net = { version = "0.5", features = ["json"] }
-wasm-bindgen-futures = "0.4.42"
 futures = "0.3.30"
-web-sys = { version = "0.3.69", features = [
-    "HtmlFormElement",
-]}
-console_error_panic_hook = "0.1.7"
 leptos = { version = "0.6.13", features = ["csr"] }
 anyhow = "1.0.86"
