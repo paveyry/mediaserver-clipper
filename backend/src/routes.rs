@@ -17,7 +17,7 @@ use rocket::{get, post};
 
 #[get("/<ui_file>")]
 pub async fn ui_files(ui_file: PathBuf) -> StdResult<NamedFile, NotFound<String>> {
-    let path = PathBuf::from("../ui/dist").join(ui_file);
+    let path = PathBuf::from("./dist").join(ui_file);
     NamedFile::open(path)
         .await
         .map_err(|e| NotFound(e.to_string()))
@@ -25,7 +25,7 @@ pub async fn ui_files(ui_file: PathBuf) -> StdResult<NamedFile, NotFound<String>
 
 #[get("/")]
 pub async fn root() -> StdResult<NamedFile, NotFound<String>> {
-    NamedFile::open("../ui/dist/index.html")
+    NamedFile::open("./dist/index.html")
         .await
         .map_err(|e| NotFound(e.to_string()))
 }

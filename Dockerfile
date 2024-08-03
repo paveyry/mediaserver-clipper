@@ -15,11 +15,11 @@ FROM alpine:3.20
 RUN apk --no-cache add ffmpeg
 RUN apk --no-cache add font-dejavu
 
-COPY --from=buildimage /srcdir/backend/target/release/mediaserver-clipper /app/backend/mediaserver-clipper
-COPY --from=buildimage /srcdir/backend/static /app/backend/public
-COPY --from=buildimage /srcdir/ui/dist /app/ui/dist
-COPY --from=buildimage /srcdir/backend/Rocket.toml /app/backend/Rocket.toml
+COPY --from=buildimage /srcdir/backend/target/release/mediaserver-clipper /app/mediaserver-clipper
+COPY --from=buildimage /srcdir/backend/static /app/static
+COPY --from=buildimage /srcdir/ui/dist /app/dist
+COPY --from=buildimage /srcdir/backend/Rocket.toml /app/Rocket.toml
 
-WORKDIR /app/backend
+WORKDIR /app
 CMD ./mediaserver-clipper
 
