@@ -3,11 +3,12 @@ FROM rust:1.79-alpine3.20 as buildimage
 
 RUN apk --no-cache add build-base
 RUN rustup target add wasm32-unknown-unknown
-RUN cargo install trunk
+RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | sh
+RUN cargo binstall trunk
 COPY ./ /srcdir
 
-WORKDIR /srcdir/backend
-RUN cargo build --release
+WORKDIR /srcdir
+RUN make
 
 # Lightweight Deployment image
 FROM alpine:3.20
