@@ -15,7 +15,11 @@ jobs:
         run: |
           rustup target add wasm32-unknown-unknown
           cargo install trunk
-      - name: Build
+      - name: Build front-end
+        working-directory: ./ui
+        run: |
+          trunk build --dist ../backend/dist
+      - name: Build backend
         working-directory: ./backend
         run: |
           cargo build --release
