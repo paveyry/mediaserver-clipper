@@ -19,4 +19,4 @@ jobs:
           rustup target add wasm32-unknown-unknown
       - name: Build backend
         run: |
-          make
+          make -B

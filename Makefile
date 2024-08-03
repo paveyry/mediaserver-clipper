@@ -1,4 +1,4 @@
-all: frontend backend
+all: backend frontend
 
 frontend:
 	cd ui && trunk build --release --dist ../backend/dist && cd ..

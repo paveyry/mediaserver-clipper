@@ -8,7 +8,7 @@ RUN cargo binstall -y trunk
 COPY ./ /srcdir
 
 WORKDIR /srcdir
-RUN make
+RUN make -B
 
 # Lightweight Deployment image
 FROM alpine:3.20
