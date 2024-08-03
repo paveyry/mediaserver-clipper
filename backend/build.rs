@@ -12,7 +12,7 @@ fn main() {
 
 fn build_frontend<P: AsRef<Path>>(source: P) {
     Command::new("trunk")
-        .args(["build", "--dist", "../backend/dist"])
+        .args(["build", "--release", "--dist", "../backend/dist"])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .current_dir(source.as_ref())
