@@ -17,7 +17,7 @@ RUN apk --no-cache add font-dejavu
 
 COPY --from=buildimage /srcdir/backend/target/release/mediaserver-clipper /app/mediaserver-clipper
 COPY --from=buildimage /srcdir/backend/static /app/static
-COPY --from=buildimage /srcdir/ui/dist /app/dist
+COPY --from=buildimage /srcdir/backend/dist /app/dist
 COPY --from=buildimage /srcdir/backend/Rocket.toml /app/Rocket.toml
 
 WORKDIR /app
