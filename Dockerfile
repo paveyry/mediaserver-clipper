@@ -1,7 +1,7 @@
 # Heavy build image
 FROM rust:1.79-alpine3.20 as buildimage
 
-RUN apk --no-cache add build-base
+RUN apk --no-cache add build-base curl
 RUN rustup target add wasm32-unknown-unknown
 RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | sh
 RUN cargo binstall trunk
