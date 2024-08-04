@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+use std::time::SystemTime;
 
 use common::ClipInfo;
 
@@ -32,7 +33,7 @@ fn clips_in_directory_with_ext(
 ) -> Result<Vec<ClipInfo>> {
     Ok(files_in_directory_with_ext(p, ext, pending)?
         .iter()
-        .map(|x| ClipInfo::new(x.to_owned(), public_url_prefix))
+        .map(|(fname, time)| ClipInfo::new(fname.to_owned(), time.to_owned(), public_url_prefix))
         .collect())
 }
 
@@ -40,12 +41,22 @@ fn files_in_directory_with_ext(
     p: &PathBuf,
     ext: &str,
     pending: &HashSet<String>,
-) -> Result<Vec<String>> {
+) -> Result<Vec<(String, SystemTime)>> {
     Ok(fs::read_dir(p)?
         .filter_map(Result::ok)
-        .filter_map(|de| de.file_name().to_str().map(ToOwned::to_owned))
-        .filter(|e| e.ends_with(ext))
-        .filter(|s| !pending.contains(s))
+        .map(|de| {
+            (
+                de.file_name().to_str().map(ToOwned::to_owned),
+                de.metadata()
+                    .ok()
+                    .and_then(|m| m.modified().ok())
+                    .unwrap_or_else(SystemTime::now),
+            )
+        })
+        .filter(|de| de.0.is_some())
+        .map(|(fname, t)| (fname.unwrap(), t))
+        .filter(|e| e.0.ends_with(ext))
+        .filter(|s| !pending.contains(&s.0))
         .collect())
 }
 

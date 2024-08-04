@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use serde::{Deserialize, Serialize};
 
 pub mod constants {
@@ -20,21 +22,23 @@ impl Default for Config {
     }
 }
 
-#[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ClipInfo {
     pub clip_name: String,
     pub url: String,
     pub public_url: String,
     pub file_name: String,
+    pub time: SystemTime,
 }
 
 impl ClipInfo {
-    pub fn new(file_name: String, public_url_prefix: &str) -> Self {
+    pub fn new(file_name: String, time: SystemTime, public_url_prefix: &str) -> Self {
         Self {
             url: format!("{}/{}", constants::OUTPUT_ROUTE, file_name),
             public_url: format!("{public_url_prefix}/{file_name}"),
             clip_name: file_name[0..file_name.len() - 4].to_owned(),
             file_name,
+            time,
         }
     }
 }

@@ -56,8 +56,9 @@ fn VideoClipsPanel(
     errors_setter: WriteSignal<ErrorManager>,
 ) -> impl IntoView {
     move || {
+        let mut clips = clips.get();
+        clips.sort_by(|a, b| b.time.cmp(&a.time));
         clips
-            .get()
             .chunks(2)
             .map(|pair| {
                 let first = view! {
@@ -87,8 +88,9 @@ fn AudioClipsPanel(
     errors_setter: WriteSignal<ErrorManager>,
 ) -> impl IntoView {
     move || {
+        let mut clips = clips.get();
+        clips.sort_by(|a, b| b.time.cmp(&a.time));
         clips
-            .get()
             .iter()
             .map(|clip| {
                 view! {
