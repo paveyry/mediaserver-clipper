@@ -189,12 +189,12 @@ Development Roadmap (upcoming improvements)
 
 From highest to lowest priority:
 
-* Sorting clips in grid from most recent to oldest
-* Selecting clip resolution
 * Documentation
+* Selecting clip resolution
+* Feature to load videos from external sources
+* Cache the clip library in the backend to avoid filesystem access at each refresh
 * Better logging
 * Get rid of std::thread and use rocket's tokio runtime instead
-* Asynchronously detect changes in the pending queue from front-end without refresh
 
 Appendices
 ----------
