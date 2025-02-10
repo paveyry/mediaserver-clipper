@@ -1,12 +1,14 @@
 use std::collections::HashSet;
 use std::fmt;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::str::FromStr;
 use std::sync::{mpsc, Arc, RwLock};
 use std::thread;
 
 use crate::app::LOCK_ERROR;
 
-use anyhow::{Error, Result};
+use anyhow::{Context, Error, Result};
 
 #[derive(Debug, Clone)]
 pub struct VideoTime(u8, u8, u8);
@@ -202,6 +204,15 @@ fn work(
 
 fn run_job(job: &Job) -> Result<()> {
     log::info!("starting file encoding: {}", &job.clip_name);
+
+    if !Path::exists(
+        &PathBuf::from_str(&job.source_file_path)
+            .context(format!("invalid file path {}", &job.source_file_path))?,
+    ) {
+        return Err(Error::msg(
+            format! {"file {} does not exist", &job.source_file_path},
+        ));
+    }
 
     let mut cmd = Command::new("ffmpeg");
     cmd.arg("-y")

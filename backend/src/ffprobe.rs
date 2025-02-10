@@ -1,8 +1,8 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str::FromStr;
 
-use anyhow::Result;
+use anyhow::{Error, Result};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -31,6 +31,12 @@ pub fn get_track_data(file_path: &str) -> Result<(Vec<String>, Vec<String>)> {
 
 pub fn list_audio_tracks(file_path: &PathBuf) -> Result<Vec<String>> {
     // TODO: return a dict and avoid string split to extract value
+
+    if !Path::exists(file_path) {
+        return Err(Error::msg(
+            format! {"file {} does not exist", file_path.to_string_lossy()},
+        ));
+    }
 
     let output = Command::new("ffprobe")
         .args(["-print_format", "json"])
@@ -61,6 +67,12 @@ pub fn list_audio_tracks(file_path: &PathBuf) -> Result<Vec<String>> {
 
 pub fn list_subtitle_tracks(file_path: &PathBuf) -> Result<Vec<String>> {
     // TODO: return a dict and avoid string split to extract value
+
+    if !Path::exists(file_path) {
+        return Err(Error::msg(
+            format! {"file {} does not exist", file_path.to_string_lossy()},
+        ));
+    }
 
     let output = Command::new("ffprobe")
         .args(["-print_format", "json"])
