@@ -208,7 +208,6 @@ fn run_job(job: &Job) -> Result<()> {
         .args(["-i", &job.source_file_path])
         .args(["-ss", &job.start_time.to_string()])
         .args(["-to", &job.end_time.to_string()])
-        .args(["-preset", "fast"])
         .args(["-map_metadata", "-1"])
         .args([
             "-metadata:g:0".to_string(),
