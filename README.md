@@ -5,7 +5,7 @@ Description
 -----------
 
 This application written in Rust serves a web application that allows users to extract clips (audio or video) from
-videos in their media server (Plex, Jellyfin, etc.). 
+videos in their media server (Plex, Jellyfin, etc.).
 
 This is loosely inspired from jo-nike's clipplex (https://github.com/jo-nike/clipplex). However,
 unlike clipplex, mediaserver-clipper does not rely on any specific mediaserver API and uses the
@@ -38,7 +38,7 @@ both in your Plex instance, then this path will also work for the Clipper app to
 
 * Search for files indexed by Media Server Clipper. This can only find files in the libraries that
 you have registered at setup (unlike direct path which can access any readable file), but it allows
-you to find a file by just writing a few letters. 
+you to find a file by just writing a few letters.
 
 MediaServer Clipper will automatically list audio and subtitle tracks and you can select which
 audio you want to use and whether or not you want to burn in subtitles in the clip.
@@ -118,11 +118,30 @@ not count finished clips, only pending ones. Default is 4.
 Running from source
 -------------------
 
-To run the app locally, install the rust toolchain (https://rustup.rs/) and run:
+To run the app locally, install the rust toolchain. First install rustup: https://rustup.rs
 
-    cargo run --release
+Then install the stable toolchain and add the WASM target:
 
-You need to have `ffmpeg` and the `DejaVu` fonts installed.
+    rustup toolchain install stable
+    rustup target add wasm32-unknown-unknown
+
+Install `trunk`: https://trunkrs.dev/
+
+You also need to have `ffmpeg` and the `DejaVu` fonts installed.
+
+Then checkout in the root of this repository and build the app:
+
+    make -B
+
+To run the app, `cd` in the `backend` directory, and run the app located in `../target/release`:
+
+    cd backend
+    ../target/release/mediaserver-clipper
+
+This will open the app on port 8000.
+Use the environment variables described in this README to set options such as the library location,
+output path, etc.
+
 
 Docker
 ------
